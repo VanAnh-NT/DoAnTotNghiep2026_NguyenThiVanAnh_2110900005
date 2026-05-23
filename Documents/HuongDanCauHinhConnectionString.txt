@@ -1,0 +1,157 @@
+HƯỚNG DẪN CẤU HÌNH CONNECTION STRING
+====================================
+
+1. Mục đích
+
+File này hướng dẫn cấu hình chuỗi kết nối database để website VAN ANH PERFUME kết nối được với SQL Server.
+
+--------------------------------------------------
+
+2. Vị trí file cấu hình trong dự án
+
+Thư mục gốc repository:
+
+E:\DAFN\ProjectCode_FF\ProjectCode
+
+Thư mục project chính:
+
+E:\DAFN\ProjectCode_FF\ProjectCode\VanAnhPerfume\VanAnhPerfume
+
+Các file cấu hình có thể nằm tại:
+
+E:\DAFN\ProjectCode_FF\ProjectCode\VanAnhPerfume\VanAnhPerfume\appsettings.json
+
+E:\DAFN\ProjectCode_FF\ProjectCode\VanAnhPerfume\VanAnhPerfume\appsettings.Development.json
+
+E:\DAFN\ProjectCode_FF\ProjectCode\VanAnhPerfume\VanAnhPerfume\appsettings.example.json
+
+Đường dẫn tương đối trong repository:
+
+VanAnhPerfume/VanAnhPerfume/appsettings.json
+
+VanAnhPerfume/VanAnhPerfume/appsettings.Development.json
+
+VanAnhPerfume/VanAnhPerfume/appsettings.example.json
+
+--------------------------------------------------
+
+3. Cách tạo file cấu hình an toàn
+
+Nếu có file:
+
+VanAnhPerfume/VanAnhPerfume/appsettings.example.json
+
+Hãy copy file này thành:
+
+VanAnhPerfume/VanAnhPerfume/appsettings.Development.json
+
+Sau đó sửa connection string cho đúng với SQL Server trên máy.
+
+Lưu ý:
+- File appsettings.example.json được phép đưa lên GitHub vì chỉ chứa cấu hình mẫu.
+- File appsettings.Development.json không nên đưa lên GitHub nếu có thông tin máy cá nhân hoặc mật khẩu thật.
+
+--------------------------------------------------
+
+4. Connection string khi dùng SQL Server Express
+
+Nếu SQL Server của bạn là SQLEXPRESS, dùng mẫu sau:
+
+"ConnectionStrings": {
+  "DefaultConnection": "Server=.\\SQLEXPRESS;Database=VanAnhPerfume;Trusted_Connection=True;TrustServerCertificate=True;"
+}
+
+--------------------------------------------------
+
+5. Connection string khi dùng SQL Server mặc định
+
+Nếu Server name là localhost, dùng mẫu sau:
+
+"ConnectionStrings": {
+  "DefaultConnection": "Server=localhost;Database=VanAnhPerfume;Trusted_Connection=True;TrustServerCertificate=True;"
+}
+
+Hoặc:
+
+"ConnectionStrings": {
+  "DefaultConnection": "Server=.;Database=VanAnhPerfume;Trusted_Connection=True;TrustServerCertificate=True;"
+}
+
+--------------------------------------------------
+
+6. Connection string khi dùng tài khoản SQL Server
+
+Nếu dùng tài khoản sa hoặc tài khoản SQL Server riêng, dùng mẫu sau:
+
+"ConnectionStrings": {
+  "DefaultConnection": "Server=localhost;Database=VanAnhPerfume;User Id=sa;Password=YOUR_PASSWORD;TrustServerCertificate=True;"
+}
+
+Lưu ý:
+Không đưa mật khẩu SQL Server thật lên GitHub.
+
+--------------------------------------------------
+
+7. Kiểm tra trong Program.cs
+
+Mở file:
+
+E:\DAFN\ProjectCode_FF\ProjectCode\VanAnhPerfume\VanAnhPerfume\Program.cs
+
+Hoặc đường dẫn tương đối:
+
+VanAnhPerfume/VanAnhPerfume/Program.cs
+
+Kiểm tra tên connection string mà project đang gọi.
+
+Ví dụ:
+
+builder.Configuration.GetConnectionString("DefaultConnection")
+
+Nếu code gọi "DefaultConnection" thì trong appsettings.json hoặc appsettings.Development.json cũng phải có:
+
+"ConnectionStrings": {
+  "DefaultConnection": "..."
+}
+
+Nếu tên không khớp, website sẽ không kết nối được database.
+
+--------------------------------------------------
+
+8. Lỗi thường gặp
+
+Lỗi:
+The ConnectionString property has not been initialized
+
+Nguyên nhân:
+- Thiếu connection string.
+- Sai tên connection string.
+- appsettings.json không đúng định dạng JSON.
+
+Cách xử lý:
+- Kiểm tra lại phần ConnectionStrings.
+- Kiểm tra tên DefaultConnection.
+- Kiểm tra dấu phẩy, dấu ngoặc trong file JSON.
+
+--------------------------------------------------
+
+Lỗi:
+A network-related or instance-specific error occurred
+
+Nguyên nhân:
+- Sai Server name.
+- SQL Server chưa chạy.
+- Dùng .\SQLEXPRESS nhưng máy không có SQL Server Express.
+
+Cách xử lý:
+- Mở SQL Server Management Studio.
+- Xem Server name đang dùng.
+- Sửa lại connection string cho đúng.
+
+--------------------------------------------------
+
+9. Bước tiếp theo
+
+Sau khi cấu hình connection string xong, chạy project theo hướng dẫn tại file:
+
+Documents/HuongDanChayProject.txt

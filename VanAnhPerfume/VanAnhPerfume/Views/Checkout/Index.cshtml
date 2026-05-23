@@ -1,0 +1,130 @@
+@model VanAnhPerfume.Models.ViewModels.CheckoutVM
+@{
+    ViewData["Title"] = "Thanh toán";
+}
+<section class="section-block pt-4">
+<div class="site-container">
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger rounded-0">@TempData["Error"]</div>
+    }
+    <div asp-validation-summary="All" class="text-danger mb-3"></div>
+    <div class="d-flex gap-3 mb-4">
+        <span class="badge bg-dark rounded-0 px-3 py-2">1. Thông tin</span>
+        <span class="badge bg-light text-dark rounded-0 px-3 py-2">2. Vận chuyển</span>
+        <span class="badge bg-light text-dark rounded-0 px-3 py-2">3. Thanh toán</span>
+    </div>
+    <form asp-action="Process" method="post">
+        <input type="hidden" asp-for="PromotionId" />
+        <input type="hidden" asp-for="DiscountAmount" />
+        <div class="row g-4">
+            <div class="col-12 col-md-7 border p-4">
+                <h3 class="h5 mb-3">Thông tin giao hàng</h3>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label>Họ tên</label>
+                        <input asp-for="FullName" class="form-control rounded-0" />
+                        <span asp-validation-for="FullName" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label>SĐT</label>
+                        <input asp-for="Phone" class="form-control rounded-0" />
+                        <span asp-validation-for="Phone" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label>Email</label>
+                        <input asp-for="Email" class="form-control rounded-0" />
+                        <span asp-validation-for="Email" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label>Tỉnh/Thành</label>
+                        <input asp-for="ShippingProvince" class="form-control rounded-0" />
+                    </div>
+                    <div class="col-12">
+                        <label>Địa chỉ</label>
+                        <input asp-for="Address" class="form-control rounded-0" />
+                        <span asp-validation-for="Address" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label>Quận/Huyện</label>
+                        <input asp-for="ShippingDistrict" class="form-control rounded-0" />
+                    </div>
+                    <div class="col-12">
+                        <label>Ghi chú</label>
+                        <textarea asp-for="Note" class="form-control rounded-0" rows="3"></textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-md-5 border p-4">
+                <h3 class="h5 mb-3">Đơn hàng</h3>
+                @foreach (var item in Model.CartItems)
+                {
+                    <div class="d-flex justify-content-between border-bottom py-2">
+                        <span>@item.ProductName x @item.Quantity</span>
+                        <span>@item.Total.ToString("N0") ₫</span>
+                    </div>
+                }
+                <div class="d-flex justify-content-between mt-2 fw-bold">
+                    <span>Tạm tính</span>
+                    <span id="subtotal">@Model.TotalAmount.ToString("N0") ₫</span>
+                </div>
+                <div class="d-flex justify-content-between mt-2">
+                    <span>Giảm giá</span>
+                    <span id="discount">@Model.DiscountAmount.ToString("N0") ₫</span>
+                </div>
+                <div class="d-flex justify-content-between mt-2 fw-bold">
+                    <span>Tổng cộng</span>
+                    <span id="finalTotal">@Model.FinalAmount.ToString("N0") ₫</span>
+                </div>
+                <div class="mt-3">
+                    <label class="small text-uppercase">Mã khuyến mãi</label>
+                    <div class="input-group">
+                        <input asp-for="PromotionCode" class="form-control rounded-0" />
+                        <button type="button" id="applyPromotionBtn" class="btn btn-secondary-lux">Áp dụng</button>
+                    </div>
+                    <small id="promotionMessage" class="text-muted"></small>
+                </div>
+                <div class="mt-3">
+                    <label class="small text-uppercase">Phương thức thanh toán</label>
+                    <div class="border p-3 rounded-0 mt-2">
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="radio" asp-for="PaymentMethod" id="payCod" value="COD" />
+                            <label class="form-check-label" for="payCod">Thanh toán khi nhận hàng (COD)</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" asp-for="PaymentMethod" id="payVnpay" value="VNPAY" />
+                            <label class="form-check-label" for="payVnpay">Thanh toán online qua VNPAY</label>
+                        </div>
+                        <span asp-validation-for="PaymentMethod" class="text-danger small"></span>
+                    </div>
+                </div>
+                <button class="btn btn-primary-lux w-100 mt-3">ĐẶT HÀNG</button>
+            </div>
+        </div>
+    </form>
+</div>
+</section>
+@section Scripts {
+<script>
+    document.getElementById('applyPromotionBtn')?.addEventListener('click', async function () {
+        const code = document.getElementById('PromotionCode').value;
+        const res = await fetch('/Checkout/ApplyCoupon', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ code })
+        });
+        const data = await res.json();
+        const msg = document.getElementById('promotionMessage');
+        if (!data.success) {
+            msg.className = 'text-danger';
+            msg.innerText = data.message;
+            return;
+        }
+        msg.className = 'text-success';
+        msg.innerText = data.message;
+        document.getElementById('discount').innerText = Number(data.discountAmount).toLocaleString('vi-VN') + ' ₫';
+        document.getElementById('finalTotal').innerText = Number(data.finalAmount).toLocaleString('vi-VN') + ' ₫';
+        document.getElementById('DiscountAmount').value = data.discountAmount;
+    });
+</script>
+}

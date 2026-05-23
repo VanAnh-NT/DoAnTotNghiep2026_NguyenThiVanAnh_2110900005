@@ -1,0 +1,17 @@
+@model VanAnhPerfume.Models.Entities.News
+@{
+    Layout = "_AdminLayout";
+}
+<div class="d-flex justify-content-between mb-3">
+    <h4>Preview bài viết #@Model.NewsId</h4>
+    <a asp-action="Edit" asp-route-id="@Model.NewsId" class="btn btn-outline-secondary">Quay lại chỉnh sửa</a>
+</div>
+<article class="card p-3">
+    <h2>@Model.Title</h2>
+    @if (!string.IsNullOrWhiteSpace(Model.ThumbnailUrl))
+    {
+        <img src="@Model.ThumbnailUrl" class="img-fluid mb-3" style="max-height:320px;object-fit:cover;" />
+    }
+    <div class="text-muted small mb-2">Slug: @Model.Slug | PublishAt: @Model.PublishAt?.ToString("dd/MM/yyyy HH:mm")</div>
+    <div>@Html.Raw(Model.Content)</div>
+</article>

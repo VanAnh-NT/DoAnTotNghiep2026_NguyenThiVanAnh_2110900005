@@ -1,0 +1,80 @@
+@model IEnumerable<VanAnhPerfume.Models.Entities.Banner>
+@{
+    Layout = "_AdminLayout";
+}
+<h4>Quản lý banner</h4>
+<form method="get" class="mb-3 d-flex gap-2">
+    <select name="position" class="form-select" style="max-width:240px;">
+        <option value="">Tất cả vị trí</option>
+        <option value="hero" selected="@(ViewBag.Position=="hero")">Hero Slider</option>
+        <option value="mid-page" selected="@(ViewBag.Position=="mid-page")">Banner giữa trang</option>
+        <option value="brand" selected="@(ViewBag.Position=="brand")">Banner brand</option>
+    </select>
+    <button class="btn btn-secondary-lux">Lọc</button>
+</form>
+<div class="mb-3">
+    <a asp-action="Create" class="btn btn-primary">Thêm mới</a>
+</div>
+@if (Model.Any())
+{
+<div class="table-responsive">
+    <table class="table table-lux align-middle">
+        <thead><tr><th></th><th>Thumbnail</th><th>Tiêu đề</th><th>Vị trí</th><th>Thứ tự</th><th>Thời gian hiển thị</th><th>Trạng thái</th><th>Action</th></tr></thead>
+        <tbody id="bannerSortList">
+        @foreach (var b in Model)
+        {
+            <tr data-id="@b.Id">
+                <td>☰</td>
+                <td><img src="@b.ImageUrl" style="width:160px;height:64px;object-fit:cover;cursor:pointer" onclick="previewBanner('@b.ImageUrl')" /></td>
+                <td>@b.Title</td>
+                <td>@b.Position</td>
+                <td>@b.SortOrder</td>
+                <td>@b.DisplayFrom?.ToString("dd/MM HH:mm") - @b.DisplayTo?.ToString("dd/MM HH:mm")</td>
+                <td><button type="button" class="btn btn-sm @(b.IsActive?"btn-success":"btn-outline-secondary")" onclick="toggleBanner(@b.Id,this)">@(b.IsActive?"Active":"Inactive")</button></td>
+                <td>
+                    <div class="d-flex gap-2 align-items-center">
+                        <a asp-action="Edit" asp-route-id="@b.Id" class="btn btn-sm btn-outline-secondary">Sửa</a>
+                        <form asp-action="Delete" method="post" class="d-inline m-0">
+                            <input type="hidden" name="id" value="@b.Id"/>
+                            <button class="btn btn-sm btn-outline-danger" type="submit">Xóa</button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>
+}
+else
+{
+    <partial name="_AdminEmptyList" />
+}
+<div class="modal fade" id="bannerPreviewModal" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-body"><img id="bannerPreviewImage" class="w-100" /></div></div></div></div>
+@section Scripts{
+@if (Model.Any())
+{
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+<script>
+new Sortable(document.getElementById('bannerSortList'),{
+ animation:150,
+ onEnd: async ()=> {
+  const payload=[...document.querySelectorAll('#bannerSortList tr[data-id]')].map((r,i)=>({id:parseInt(r.dataset.id),order:i+1}));
+  await fetch('/Admin/Banner/UpdateSort',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+  location.reload();
+ }
+});
+</script>
+}
+<script>
+async function toggleBanner(id,btn){
+ const res=await fetch('/Admin/Banner/ToggleActive',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:`id=${id}`});
+ const data=await res.json();
+ if(data.success){btn.className='btn btn-sm '+(data.isActive?'btn-success':'btn-outline-secondary');btn.textContent=data.isActive?'Active':'Inactive';}
+}
+function previewBanner(url){
+ document.getElementById('bannerPreviewImage').src=url;
+ new bootstrap.Modal(document.getElementById('bannerPreviewModal')).show();
+}
+</script>
+}

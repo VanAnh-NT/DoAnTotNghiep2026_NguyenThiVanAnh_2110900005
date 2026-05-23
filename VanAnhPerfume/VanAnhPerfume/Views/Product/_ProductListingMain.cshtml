@@ -1,0 +1,76 @@
+@using Microsoft.AspNetCore.Http.Extensions
+@model VanAnhPerfume.Models.ViewModels.ProductListVM
+@{
+    var selectedConcentrations = (ViewBag.Concentrations as List<string>) ?? [];
+    var startItem = Model.TotalItems == 0 ? 0 : ((Model.Page - 1) * Model.PageSize) + 1;
+    var endItem = Math.Min(Model.Page * Model.PageSize, Model.TotalItems);
+}
+<div class="listing-toolbar mb-3">
+    <div class="listing-result-count" id="productListingResultCount">
+        Hiển thị @startItem-@endItem của @Model.TotalItems kết quả
+    </div>
+    <form method="get" class="listing-sort-form" id="productSortForm">
+        <input type="hidden" name="q" value="@Model.Query" />
+        <input type="hidden" name="brand" value="@Model.Brand" />
+        <input type="hidden" name="category" value="@Model.Category" />
+        <input type="hidden" name="gender" value="@Model.Gender" />
+        @foreach (var c in selectedConcentrations)
+        {
+            <input type="hidden" name="concentration" value="@c" />
+        }
+        @if (selectedConcentrations.Count == 0 && !string.IsNullOrEmpty(Model.Concentration))
+        {
+            <input type="hidden" name="concentration" value="@Model.Concentration" />
+        }
+        <input type="hidden" name="minPrice" value="@Model.MinPrice" />
+        <input type="hidden" name="maxPrice" value="@Model.MaxPrice" />
+        <select class="form-select rounded-0 listing-sort-select" name="sort" aria-label="Sắp xếp">
+            <option value="">Thứ tự mặc định</option>
+            <option value="price_asc" selected="@(Model.Sort=="price_asc")">Giá: thấp đến cao</option>
+            <option value="price_desc" selected="@(Model.Sort=="price_desc")">Giá: cao xuống thấp</option>
+            <option value="name_desc" selected="@(Model.Sort=="name_desc")">Mới nhất</option>
+        </select>
+    </form>
+</div>
+<div class="product-grid product-grid-listing" id="productListingGrid">
+    @foreach (var item in Model.Products)
+    {
+        <article class="product-card">
+            <a class="product-thumb d-block" asp-action="Detail" asp-route-id="@item.ProductId">
+                <img class="product-thumb-main" src="@item.ImageUrl" alt="@item.ProductName" />
+                <img class="product-thumb-hover" src="@(item.HoverImageUrl ?? item.ImageUrl)" alt="@item.ProductName" />
+            </a>
+            <div class="p-3">
+                <div class="label-uppercase text-muted">@item.BrandName</div>
+                <h3 class="h6 mb-2">
+                    <a class="text-dark text-decoration-none" asp-action="Detail" asp-route-id="@item.ProductId">@item.ProductName</a>
+                </h3>
+                <span class="fw-semibold">@item.FormattedPrice</span>
+            </div>
+        </article>
+    }
+</div>
+<nav class="mt-4" id="productListingPagination" aria-label="Phân trang">
+    <ul class="pagination pagination-lux">
+        @for (var i = 1; i <= Model.TotalPages; i++)
+        {
+            var qb = new QueryBuilder();
+            if (!string.IsNullOrWhiteSpace(Model.Query)) qb.Add("q", Model.Query!);
+            if (!string.IsNullOrWhiteSpace(Model.Brand)) qb.Add("brand", Model.Brand!);
+            if (!string.IsNullOrWhiteSpace(Model.Category)) qb.Add("category", Model.Category!);
+            if (!string.IsNullOrWhiteSpace(Model.Sort)) qb.Add("sort", Model.Sort!);
+            if (!string.IsNullOrWhiteSpace(Model.Gender)) qb.Add("gender", Model.Gender!);
+            foreach (var c in selectedConcentrations)
+            {
+                qb.Add("concentration", c);
+            }
+            if (Model.MinPrice.HasValue) qb.Add("minPrice", Model.MinPrice.Value.ToString(System.Globalization.CultureInfo.InvariantCulture));
+            if (Model.MaxPrice.HasValue) qb.Add("maxPrice", Model.MaxPrice.Value.ToString(System.Globalization.CultureInfo.InvariantCulture));
+            qb.Add("page", i.ToString());
+            var pageHref = "/Product" + qb.ToQueryString();
+            <li class="page-item @(i == Model.Page ? "active" : "")">
+                <a class="page-link rounded-0 border-dark text-dark @(i==Model.Page?"bg-dark text-white":"")" href="@pageHref">@i</a>
+            </li>
+        }
+    </ul>
+</nav>

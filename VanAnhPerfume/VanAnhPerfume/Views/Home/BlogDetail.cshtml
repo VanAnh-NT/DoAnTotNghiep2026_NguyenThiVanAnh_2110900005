@@ -1,0 +1,38 @@
+@model VanAnhPerfume.Models.ViewModels.BlogDetailVM
+@{
+    ViewData["Title"] = Model.CurrentPost.Title;
+}
+@section MetaTags {
+    <meta name="description" content="@(Model.CurrentPost.MetaDescription ?? Model.CurrentPost.Excerpt)" />
+    <meta property="og:title" content="@(Model.CurrentPost.MetaTitle ?? Model.CurrentPost.Title)" />
+    <meta property="og:description" content="@(Model.CurrentPost.MetaDescription ?? Model.CurrentPost.Excerpt)" />
+    <meta property="og:image" content="@(Model.CurrentPost.ThumbnailUrl ?? Model.CurrentPost.Image)" />
+    <meta property="og:type" content="article" />
+}
+<section class="pt-4">
+    <div class="small text-muted mb-2 site-container">Trang chủ &gt; Blog &gt; @Model.CurrentPost.Title</div>
+    <div class="container-fluid px-0 mb-4">
+        <img src="@(Model.CurrentPost.ThumbnailUrl ?? Model.CurrentPost.Image)" class="w-100" style="max-height:420px; object-fit:cover;" />
+    </div>
+    <div class="site-container section-block pt-0">
+        <div class="row g-4">
+            <div class="col-12 col-md-8">
+                <article class="blog-content">
+                    <span class="badge bg-dark-subtle text-dark mb-2">@Model.CurrentPost.CategoryTag</span>
+                    <h1 class="mb-2">@Model.CurrentPost.Title</h1>
+                    <p class="text-muted">@Model.CurrentPost.AuthorName • @Model.CurrentPost.PublishAt?.ToString("dd/MM/yyyy HH:mm") • @Model.CurrentPost.ViewCount lượt xem</p>
+                    <div>@Html.Raw(Model.CurrentPost.Content)</div>
+                </article>
+            </div>
+            <div class="col-12 col-md-4">
+                <aside class="border p-3" style="height:fit-content;">
+                    <h3 class="h6 mb-3">Bài viết liên quan</h3>
+                    @foreach (var post in Model.RelatedPosts)
+                    {
+                        <a class="d-block border-bottom py-2 text-decoration-none text-dark" href="/Home/BlogDetail/@post.NewsId">@post.Title</a>
+                    }
+                </aside>
+            </div>
+        </div>
+    </div>
+</section>

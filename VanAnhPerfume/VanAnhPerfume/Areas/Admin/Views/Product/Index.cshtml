@@ -1,0 +1,130 @@
+@model IEnumerable<VanAnhPerfume.Models.ViewModels.AdminProductIndexVM>
+@{
+    Layout = "_AdminLayout";
+    var statusFilter = ViewBag.Status as string;
+}
+<div class="d-flex justify-content-between mb-3">
+    <h4>Quản lý sản phẩm</h4>
+    <div class="d-flex gap-2">
+        <a class="btn btn-outline-secondary" asp-action="ExportCsv">Export CSV</a>
+        <a class="btn" style="background:#c9a96e;color:#fff;border-radius:8px;" asp-action="Create">Thêm sản phẩm</a>
+    </div>
+</div>
+<form method="get" class="d-flex flex-wrap align-items-center admin-filter-toolbar mb-3">
+    <input name="q" value="@ViewBag.Query" class="form-control admin-filter-q" placeholder="Tìm theo tên sản phẩm" />
+    <select class="form-select" name="categoryId" aria-label="Danh mục">
+        <option value="">Danh mục</option>
+        @foreach (var c in (ViewBag.Categories as List<VanAnhPerfume.Models.Entities.Category> ?? []))
+        {
+            <option value="@c.CategoryId" selected="@(ViewBag.CategoryId == c.CategoryId)">@c.Name</option>
+        }
+    </select>
+    <select class="form-select" name="brandId" aria-label="Brand">
+        <option value="">Brand</option>
+        @foreach (var b in (ViewBag.Brands as List<VanAnhPerfume.Models.Entities.Brand> ?? []))
+        {
+            <option value="@b.BrandId" selected="@(ViewBag.BrandId == b.BrandId)">@b.Name</option>
+        }
+    </select>
+    <select class="form-select" name="status" aria-label="Trạng thái">
+        @if (string.IsNullOrEmpty(statusFilter) || string.Equals(statusFilter, "active", StringComparison.OrdinalIgnoreCase))
+        {
+            <option value="" selected>Đang hoạt động</option>
+        }
+        else
+        {
+            <option value="">Đang hoạt động</option>
+        }
+        @if (string.Equals(statusFilter, "all", StringComparison.OrdinalIgnoreCase))
+        {
+            <option value="all" selected>Tất cả</option>
+        }
+        else
+        {
+            <option value="all">Tất cả</option>
+        }
+        @if (string.Equals(statusFilter, "inactive", StringComparison.OrdinalIgnoreCase))
+        {
+            <option value="inactive" selected>Đã ẩn (đã xóa)</option>
+        }
+        else
+        {
+            <option value="inactive">Đã ẩn (đã xóa)</option>
+        }
+    </select>
+    <select class="form-select" name="stock" aria-label="Tồn kho">
+        <option value="">Tồn kho</option>
+        <option value="instock" selected="@(ViewBag.Stock == "instock")">Còn hàng</option>
+        <option value="low" selected="@(ViewBag.Stock == "low")">Sắp hết</option>
+        <option value="out" selected="@(ViewBag.Stock == "out")">Hết hàng</option>
+    </select>
+    <button type="submit" class="btn btn-secondary-lux">Lọc</button>
+</form>
+@if (Model.Any())
+{
+    <form method="post" asp-area="Admin" asp-controller="Product" asp-action="BulkDelete">
+        <table class="table table-lux">
+            <thead><tr><th><input type="checkbox" id="checkAll" /></th><th>Ảnh</th><th>Tên SP</th><th>Danh mục</th><th>Brand</th><th>Biến thể</th><th>Tồn kho</th><th>Trạng thái</th><th></th></tr></thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td><input type="checkbox" name="ids" value="@item.ProductId" class="bulk-check" /></td>
+                        <td><img src="@(item.MainImage ?? "/images/default-perfume.jpg")" style="width:56px;height:56px;object-fit:cover;border-radius:6px;" /></td>
+                        <td>@item.Name</td>
+                        <td>@item.CategoryName</td>
+                        <td>@item.BrandName</td>
+                        <td>@item.VariantCount biến thể</td>
+                        <td>
+                            <strong>@item.TotalAvailable</strong>
+                            @if (item.IsOutOfStock)
+                            {
+                                <span class="badge bg-danger">Hết hàng</span>
+                            }
+                            else if (item.IsLowStock)
+                            {
+
+                                <span class="badge bg-warning text-dark">Sắp hết</span>
+                            }
+                        </td>
+                        <td>@(item.IsActive ? "Active" : "Inactive")</td>
+                        <td>
+                            <a class="btn btn-sm text-white" style="background:#1a1a1a;border-radius:8px;" asp-action="Edit" asp-route-id="@item.ProductId">Sửa</a>
+                            <a class="btn btn-sm btn-outline-primary" asp-action="Inventory" asp-route-id="@item.ProductId">Tồn kho</a>
+                            <a class="btn btn-sm btn-danger" style="border-radius:8px;" asp-area="Admin" asp-controller="Product" asp-action="Delete" asp-route-id="@item.ProductId" onclick="return confirm('Ẩn sản phẩm này khỏi cửa hàng? (Có thể xem lại trong bộ lọc Đã ẩn.)');">Xóa</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+        <div class="d-flex gap-2 mb-3">
+            <button type="submit" class="btn btn-outline-danger" onclick="return confirm('Ẩn các sản phẩm đã chọn?');">Xóa nhiều</button>
+            <button type="submit" class="btn btn-outline-dark" formaction="@(Url.Action("BulkToggleActive", "Product", new { area = "Admin" }))" formmethod="post">Bật/tắt Active</button>
+        </div>
+    </form>
+    <nav>
+        <ul class="pagination">
+            @for (var i = 1; i <= (int)ViewBag.TotalPages; i++)
+            {
+                <li class="page-item @(i == (int)ViewBag.Page ? "active" : "")">
+                    <a class="page-link" asp-area="Admin" asp-controller="Product" asp-action="Index"
+                       asp-route-q="@ViewBag.Query" asp-route-page="@i"
+                       asp-route-categoryId="@ViewBag.CategoryId" asp-route-brandId="@ViewBag.BrandId"
+                       asp-route-status="@ViewBag.Status" asp-route-stock="@ViewBag.Stock" asp-route-sort="@ViewBag.Sort">@i</a>
+                </li>
+            }
+        </ul>
+    </nav>
+
+    @section Scripts {
+        <script>
+            document.getElementById('checkAll')?.addEventListener('change', e => {
+                document.querySelectorAll('.bulk-check').forEach(cb => cb.checked = e.target.checked);
+            });
+        </script>
+    }
+}
+else
+{
+    <partial name="_AdminEmptyList" />
+}

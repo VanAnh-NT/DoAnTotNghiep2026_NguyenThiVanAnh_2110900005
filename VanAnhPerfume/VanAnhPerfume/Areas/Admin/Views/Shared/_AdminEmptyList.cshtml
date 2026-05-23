@@ -1,0 +1,13 @@
+@{
+    var message = ViewData["AdminEmptyMessage"] as string ?? "Không có kết quả phù hợp với bộ lọc.";
+    var hideReset = ViewData["AdminEmptyHideReset"] as bool? == true;
+    var controller = ViewContext.RouteData.Values["controller"]?.ToString() ?? "Home";
+    var action = ViewContext.RouteData.Values["action"]?.ToString() ?? "Index";
+}
+<div class="admin-empty-list border rounded p-4 text-center text-muted my-3">
+    <p class="mb-0">@message</p>
+    @if (!hideReset)
+    {
+        <a asp-area="Admin" asp-controller="@controller" asp-action="@action" class="btn btn-sm btn-outline-dark mt-3">Xóa bộ lọc</a>
+    }
+</div>

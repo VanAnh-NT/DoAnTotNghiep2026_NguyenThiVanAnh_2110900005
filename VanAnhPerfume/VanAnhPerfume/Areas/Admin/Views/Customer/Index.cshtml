@@ -1,0 +1,155 @@
+@model VanAnhPerfume.Models.ViewModels.AdminCustomerIndexVm
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Khách hàng";
+    string AvatarLetter(string? name) => string.IsNullOrWhiteSpace(name) ? "?" : char.ToUpperInvariant(name.Trim()[0]).ToString();
+    int Hue(int userId) => (userId * 137) % 360;
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h4 class="m-0">Quản lý khách hàng</h4>
+</div>
+
+<div class="d-flex flex-wrap gap-2 mb-4">
+    <span class="badge rounded-pill bg-dark px-3 py-2">Tổng: @Model.Stats.Total</span>
+    <span class="badge rounded-pill bg-success px-3 py-2">Hoạt động: @Model.Stats.Active</span>
+    <span class="badge rounded-pill bg-danger px-3 py-2">Bị khóa: @Model.Stats.Locked</span>
+    <span class="badge rounded-pill bg-primary px-3 py-2">Mới tháng này: @Model.Stats.NewThisMonth</span>
+</div>
+
+<form method="get" class="d-flex flex-wrap align-items-center admin-filter-toolbar mb-3">
+    <input name="q" value="@Model.Q" class="form-control" placeholder="Tên, email, SĐT" />
+    <select name="status" class="form-select" aria-label="Trạng thái">
+        @if (string.IsNullOrEmpty(Model.StatusFilter))
+        {<option value="" selected>Tất cả</option>}
+        else
+        {<option value="">Tất cả</option>}
+        @if (Model.StatusFilter == "active")
+        {<option value="active" selected>Hoạt động</option>}
+        else
+        {<option value="active">Hoạt động</option>}
+        @if (Model.StatusFilter == "locked")
+        {<option value="locked" selected>Bị khóa</option>}
+        else
+        {<option value="locked">Bị khóa</option>}
+    </select>
+    <input type="date" name="fromDate" value="@(Model.FromDate?.ToString("yyyy-MM-dd"))" class="form-control" title="Đăng ký từ" />
+    <input type="date" name="toDate" value="@(Model.ToDate?.ToString("yyyy-MM-dd"))" class="form-control" title="Đến" />
+    <select name="sort" class="form-select" aria-label="Sắp xếp">
+        @foreach (var opt in new[] { ("created_desc", "Đăng ký mới nhất"), ("spent_desc", "Chi tiêu cao nhất"), ("orders_desc", "Nhiều đơn nhất") })
+        {
+            if (Model.Sort == opt.Item1)
+            {<option value="@opt.Item1" selected>@opt.Item2</option>}
+            else
+            {<option value="@opt.Item1">@opt.Item2</option>}
+        }
+    </select>
+    <button type="submit" class="btn btn-secondary-lux">Lọc</button>
+</form>
+
+@if (Model.Rows.Any())
+{
+<div class="table-responsive">
+    <table class="table table-lux align-middle">
+        <thead>
+            <tr>
+                <th style="width:56px">Avatar</th>
+                <th>Họ tên</th>
+                <th>Email</th>
+                <th>SĐT</th>
+                <th class="text-end">Đơn hàng</th>
+                <th class="text-end">Chi tiêu</th>
+                <th>Đăng ký</th>
+                <th>Đăng nhập cuối</th>
+                <th>Trạng thái</th>
+                <th style="width:220px">Thao tác</th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (var row in Model.Rows)
+        {
+            var hue = Hue(row.UserId);
+            <tr>
+                <td>
+                    @if (!string.IsNullOrWhiteSpace(row.Avatar))
+                    {
+                        <img src="@Url.Content(row.Avatar)" alt="" class="rounded-circle" style="width:40px;height:40px;object-fit:cover" />
+                    }
+                    else
+                    {
+                        <span class="rounded-circle d-inline-flex align-items-center justify-content-center text-white fw-semibold" style="width:40px;height:40px;background:hsl(@hue,65%,45%)">@AvatarLetter(row.FullName)</span>
+                    }
+                </td>
+                <td>@row.FullName</td>
+                <td>@row.Email</td>
+                <td>@(row.Phone ?? "—")</td>
+                <td class="text-end">@row.OrderCount</td>
+                <td class="text-end">@row.PaidSpend.ToString("N0") ₫</td>
+                <td>@(row.CreatedAt?.ToString("dd/MM/yyyy HH:mm") ?? "—")</td>
+                <td>@(row.LastLoginAt?.ToString("dd/MM/yyyy HH:mm") ?? "—")</td>
+                <td>
+                    @if (row.IsActive)
+                    {
+                        <span class="badge bg-success">Hoạt động</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-danger">Bị khóa</span>
+                    }
+                </td>
+                <td>
+                    <div class="d-flex flex-wrap gap-1">
+                        <a class="btn btn-sm btn-outline-primary" asp-action="Detail" asp-route-id="@row.UserId">Xem chi tiết</a>
+                        @if (row.IsActive)
+                        {
+                            <form asp-area="Admin" asp-controller="Customer" asp-action="SetActive" method="post" class="d-inline" onsubmit="return confirm('Khóa tài khoản này? Khách hàng sẽ không thể đăng nhập.');">
+                                <input type="hidden" name="id" value="@row.UserId" />
+                                <input type="hidden" name="activate" value="false" />
+                                <input type="hidden" name="q" value="@Model.Q" />
+                                <input type="hidden" name="status" value="@Model.StatusFilter" />
+                                <input type="hidden" name="fromDate" value="@(Model.FromDate?.ToString("yyyy-MM-dd"))" />
+                                <input type="hidden" name="toDate" value="@(Model.ToDate?.ToString("yyyy-MM-dd"))" />
+                                <input type="hidden" name="sort" value="@Model.Sort" />
+                                <input type="hidden" name="page" value="@Model.Page" />
+                                <button type="submit" class="btn btn-sm btn-outline-danger">Khóa tài khoản</button>
+                            </form>
+                        }
+                        else
+                        {
+                            <form asp-area="Admin" asp-controller="Customer" asp-action="SetActive" method="post" class="d-inline">
+                                <input type="hidden" name="id" value="@row.UserId" />
+                                <input type="hidden" name="activate" value="true" />
+                                <input type="hidden" name="q" value="@Model.Q" />
+                                <input type="hidden" name="status" value="@Model.StatusFilter" />
+                                <input type="hidden" name="fromDate" value="@(Model.FromDate?.ToString("yyyy-MM-dd"))" />
+                                <input type="hidden" name="toDate" value="@(Model.ToDate?.ToString("yyyy-MM-dd"))" />
+                                <input type="hidden" name="sort" value="@Model.Sort" />
+                                <input type="hidden" name="page" value="@Model.Page" />
+                                <button type="submit" class="btn btn-sm btn-outline-success">Mở khóa</button>
+                            </form>
+                        }
+                    </div>
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>
+}
+else
+{
+    <partial name="_AdminEmptyList" />
+}
+
+@if (Model.Rows.Any() && Model.TotalPages > 1)
+{
+    <nav class="mt-3 d-flex flex-wrap align-items-center gap-2">
+        <a class="btn btn-sm btn-outline-secondary @(Model.Page <= 1 ? "disabled" : null)"
+           asp-action="Index" asp-route-page="@(Model.Page - 1)" asp-route-q="@Model.Q" asp-route-status="@Model.StatusFilter"
+           asp-route-fromDate="@Model.FromDate" asp-route-toDate="@Model.ToDate" asp-route-sort="@Model.Sort">Trước</a>
+        <span class="text-muted small">Trang @Model.Page / @Model.TotalPages</span>
+        <a class="btn btn-sm btn-outline-secondary @(Model.Page >= Model.TotalPages ? "disabled" : null)"
+           asp-action="Index" asp-route-page="@(Model.Page + 1)" asp-route-q="@Model.Q" asp-route-status="@Model.StatusFilter"
+           asp-route-fromDate="@Model.FromDate" asp-route-toDate="@Model.ToDate" asp-route-sort="@Model.Sort">Sau</a>
+    </nav>
+}

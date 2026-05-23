@@ -1,0 +1,197 @@
+HƯỚNG DẪN IMPORT DATABASE VAN ANH PERFUME
+========================================
+
+1. Mục đích
+
+File này hướng dẫn cách import database cho website VAN ANH PERFUME bằng SQL Server Management Studio.
+
+File database sử dụng:
+
+Database/VANANHPERFUME_DBFN.sql
+
+Tên database khuyến nghị:
+
+VanAnhPerfume
+
+--------------------------------------------------
+
+2. Phần mềm cần có
+
+Trước khi import database, cần cài:
+
+- SQL Server
+- SQL Server Management Studio
+
+Có thể dùng SQL Server Developer, SQL Server Express hoặc SQL Server bản khác.
+
+--------------------------------------------------
+
+3. Mở SQL Server Management Studio
+
+Bước 1:
+Mở SQL Server Management Studio.
+
+Bước 2:
+Kết nối tới SQL Server.
+
+Một số Server name thường dùng:
+
+localhost
+
+.
+
+.\SQLEXPRESS
+
+Nếu dùng Windows Authentication thì chọn:
+
+Authentication: Windows Authentication
+
+Sau đó bấm Connect.
+
+--------------------------------------------------
+
+4. Tạo database mới
+
+Bước 1:
+Trong Object Explorer, nhấn chuột phải vào thư mục Databases.
+
+Bước 2:
+Chọn New Database.
+
+Bước 3:
+Nhập tên database:
+
+VanAnhPerfume
+
+Bước 4:
+Bấm OK.
+
+--------------------------------------------------
+
+5. Mở file SQL
+
+Bước 1:
+Chọn File.
+
+Bước 2:
+Chọn Open.
+
+Bước 3:
+Chọn File.
+
+Bước 4:
+Mở file:
+
+Database/VANANHPERFUME_DBFN.sql
+
+--------------------------------------------------
+
+6. Chọn đúng database trước khi chạy
+
+Trên thanh công cụ của SQL Server Management Studio, chọn database:
+
+VanAnhPerfume
+
+Lưu ý:
+Không nên để database là master khi chạy file SQL, trừ khi trong file SQL đã có sẵn lệnh USE VanAnhPerfume.
+
+--------------------------------------------------
+
+7. Chạy script SQL
+
+Bấm Execute hoặc nhấn phím F5.
+
+Nếu chạy thành công, SQL Server Management Studio sẽ hiển thị thông báo:
+
+Commands completed successfully.
+
+--------------------------------------------------
+
+8. Kiểm tra sau khi import
+
+Sau khi chạy xong:
+
+1. Nhấn chuột phải vào database VanAnhPerfume.
+2. Chọn Refresh.
+3. Mở thư mục Tables.
+4. Kiểm tra các bảng đã được tạo.
+
+Một số bảng có thể có trong hệ thống:
+
+- Users
+- Roles
+- Products
+- Categories
+- Brands
+- ProductImages
+- ProductVariants
+- Inventories
+- Orders
+- OrderDetails
+- Payments
+- News
+- Banners
+- Reviews
+- Promotions
+
+Tên bảng có thể thay đổi tùy theo phiên bản source code.
+
+--------------------------------------------------
+
+9. Kiểm tra dữ liệu mẫu
+
+Có thể chạy các câu lệnh sau:
+
+SELECT * FROM Users;
+
+SELECT * FROM Roles;
+
+SELECT * FROM Products;
+
+SELECT * FROM Categories;
+
+SELECT * FROM Brands;
+
+Nếu các bảng có dữ liệu thì database đã import cả dữ liệu mẫu.
+
+--------------------------------------------------
+
+10. Lỗi thường gặp khi import database
+
+Lỗi 1:
+Cannot open database requested by the login
+
+Cách xử lý:
+- Kiểm tra database VanAnhPerfume đã được tạo chưa.
+- Kiểm tra tên database trong connection string.
+- Kiểm tra quyền truy cập SQL Server.
+
+--------------------------------------------------
+
+Lỗi 2:
+Invalid object name
+
+Cách xử lý:
+- Kiểm tra đã chọn đúng database VanAnhPerfume trước khi chạy script chưa.
+- Refresh lại database.
+- Chạy lại file VANANHPERFUME_DBFN.sql.
+
+--------------------------------------------------
+
+Lỗi 3:
+There is already an object named ...
+
+Cách xử lý:
+- Có thể database đã có bảng cũ.
+- Nếu muốn import lại từ đầu, có thể xóa database cũ rồi tạo lại database mới.
+- Sau đó chạy lại file SQL.
+
+--------------------------------------------------
+
+11. Ghi chú
+
+Sau khi import database thành công, cần cấu hình connection string trong project.
+
+Xem hướng dẫn cấu hình tại file:
+
+Documents/HuongDanCauHinhConnectionString.txt

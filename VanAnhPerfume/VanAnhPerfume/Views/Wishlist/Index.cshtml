@@ -1,0 +1,39 @@
+@model IEnumerable<VanAnhPerfume.Models.ViewModels.WishlistItemVM>
+@{
+    ViewData["Title"] = "Yêu thích";
+}
+<section class="section-block pt-4">
+<div class="site-container">
+    <div class="row g-4">
+        <div class="col-12 col-md-4">
+            <partial name="~/Views/Account/_AccountNav.cshtml" />
+        </div>
+        <div class="col-12 col-md-8">
+            <h1 class="h3 mb-3">Danh sách yêu thích</h1>
+            @if (!Model.Any())
+            {
+                <div class="border p-4">Bạn chưa có sản phẩm yêu thích.</div>
+            }
+            else
+            {
+                <div class="product-grid wishlist-grid">
+                @foreach (var item in Model)
+                {
+                    <article class="product-card">
+                        <a class="product-thumb d-block" asp-controller="Product" asp-action="Detail" asp-route-id="@item.ProductId">
+                            <img class="product-thumb-main" src="@item.ImageUrl" alt="@item.ProductName" />
+                            <img class="product-thumb-hover" src="@item.ImageUrl" alt="@item.ProductName" />
+                        </a>
+                        <div class="p-3">
+                            <h6><a class="text-dark text-decoration-none" asp-controller="Product" asp-action="Detail" asp-route-id="@item.ProductId">@item.ProductName</a></h6>
+                            <div class="fw-bold">@item.Price.ToString("N0") ₫</div>
+                            <a class="btn btn-outline-danger rounded-0 py-2 px-3 mt-2" asp-action="Remove" asp-route-productId="@item.ProductId">Xóa</a>
+                        </div>
+                    </article>
+                }
+                </div>
+            }
+        </div>
+    </div>
+</div>
+</section>

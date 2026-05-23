@@ -1,0 +1,52 @@
+@model List<VanAnhPerfume.Models.Entities.InventoryLog>
+@{
+    Layout = "_AdminLayout";
+    var variantMap = ViewBag.VariantMap as Dictionary<int, dynamic> ?? new();
+    string BadgeClass(string t) => t switch
+    {
+        "Import" => "bg-success",
+        "Sale" => "bg-warning text-dark",
+        "Cancel" => "bg-secondary",
+        "Return" => "bg-primary",
+        "Adjustment" => "bg-info text-dark",
+        _ => "bg-dark"
+    };
+}
+<h4>Lịch sử tồn kho</h4>
+<form method="get" class="row g-2 mb-3">
+    <div class="col-md-3"><input class="form-control" name="sku" value="@ViewBag.Sku" placeholder="SKU" /></div>
+    <div class="col-md-2"><select class="form-select" name="changeType"><option value="">Loại</option><option selected="@(ViewBag.ChangeType=="Import")">Import</option><option selected="@(ViewBag.ChangeType=="Sale")">Sale</option><option selected="@(ViewBag.ChangeType=="Cancel")">Cancel</option><option selected="@(ViewBag.ChangeType=="Return")">Return</option><option selected="@(ViewBag.ChangeType=="Adjustment")">Adjustment</option></select></div>
+    <div class="col-md-2"><input class="form-control" type="date" name="fromDate" value="@(((DateTime?)ViewBag.FromDate)?.ToString("yyyy-MM-dd"))" /></div>
+    <div class="col-md-2"><input class="form-control" type="date" name="toDate" value="@(((DateTime?)ViewBag.ToDate)?.ToString("yyyy-MM-dd"))" /></div>
+    <div class="col-md-2 d-grid"><button class="btn btn-secondary-lux">Lọc</button></div>
+    <div class="col-md-1 d-grid"><a class="btn btn-outline-dark" asp-action="ExportLogsCsv" asp-route-sku="@ViewBag.Sku" asp-route-changeType="@ViewBag.ChangeType" asp-route-fromDate="@ViewBag.FromDate" asp-route-toDate="@ViewBag.ToDate">CSV</a></div>
+</form>
+@if (Model.Any())
+{
+<div class="table-responsive">
+    <table class="table table-lux table-sm">
+        <thead><tr><th>Thời gian</th><th>SKU</th><th>Biến thể</th><th>Loại</th><th>Thay đổi</th><th>Tồn sau</th><th>Ghi chú</th><th>Người thực hiện</th></tr></thead>
+        <tbody>
+        @foreach (var log in Model)
+        {
+            var pair = variantMap.ContainsKey(log.VariantId) ? variantMap[log.VariantId] : null;
+            var type = log.ChangeType ?? log.ActionType;
+            <tr>
+                <td>@log.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                <td>@(pair?.Sku ?? $"#{log.VariantId}")</td>
+                <td>@(pair?.Label ?? "-")</td>
+                <td><span class="badge @BadgeClass(type)">@type</span></td>
+                <td>@(log.QuantityChange != 0 ? log.QuantityChange : log.QuantityDelta)</td>
+                <td>@(log.QuantityAfter != 0 ? log.QuantityAfter : log.StockAfter)</td>
+                <td>@log.Note</td>
+                <td>@log.CreatedBy</td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>
+}
+else
+{
+    <partial name="_AdminEmptyList" />
+}

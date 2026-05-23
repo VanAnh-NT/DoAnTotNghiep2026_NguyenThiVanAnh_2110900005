@@ -1,0 +1,48 @@
+@model IEnumerable<VanAnhPerfume.Models.Entities.PaymentLog>
+@{
+    var payment = ViewBag.Payment as VanAnhPerfume.Models.Entities.Payment;
+    var orderLogs = ViewBag.OrderLogs as IEnumerable<VanAnhPerfume.Models.Entities.OrderStatusLog> ?? Enumerable.Empty<VanAnhPerfume.Models.Entities.OrderStatusLog>();
+}
+@if (payment != null)
+{
+    <div class="mb-3">
+        <div><strong>Đơn hàng:</strong> <a href="/Admin/Order/Details/@payment.OrderId">@(payment.Order?.OrderCode ?? $"#{payment.OrderId}")</a></div>
+        <div><strong>Phương thức:</strong> @payment.PaymentMethod | <strong>Số tiền:</strong> @payment.Amount.ToString("N0") ₫ | <strong>Trạng thái:</strong> @payment.Status</div>
+        <div><strong>TransactionId:</strong> @(string.IsNullOrWhiteSpace(payment.TransactionId) ? "-" : payment.TransactionId)</div>
+        @if (!string.IsNullOrWhiteSpace(payment.PaymentGatewayResponse))
+        {
+            <details><summary>GatewayResponse raw</summary><pre class="small">@payment.PaymentGatewayResponse</pre></details>
+        }
+    </div>
+}
+<table class="table table-sm">
+    <thead><tr><th>Thời gian</th><th>Old</th><th>New</th><th>Source</th><th>Note</th></tr></thead>
+    <tbody>
+    @foreach (var log in Model)
+    {
+        <tr>
+            <td>@log.LogDate?.ToString("dd/MM/yyyy HH:mm:ss")</td>
+            <td>@log.OldStatus</td>
+            <td>@log.NewStatus</td>
+            <td>@log.Source</td>
+            <td>@(log.Note ?? log.Message)</td>
+        </tr>
+    }
+    </tbody>
+</table>
+<h6 class="mt-3">Order Status Timeline</h6>
+<table class="table table-sm">
+    <thead><tr><th>Thời gian</th><th>Old</th><th>New</th><th>Payment</th><th>Note</th></tr></thead>
+    <tbody>
+    @foreach (var item in orderLogs)
+    {
+        <tr>
+            <td>@item.CreatedAt.ToString("dd/MM/yyyy HH:mm:ss")</td>
+            <td>@item.OldStatus</td>
+            <td>@item.NewStatus</td>
+            <td>@item.OldPaymentStatus → @item.NewPaymentStatus</td>
+            <td>@item.Note</td>
+        </tr>
+    }
+    </tbody>
+</table>

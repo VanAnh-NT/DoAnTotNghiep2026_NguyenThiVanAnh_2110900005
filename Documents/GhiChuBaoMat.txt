@@ -1,0 +1,122 @@
+GHI CHÚ BẢO MẬT KHI ĐƯA SOURCE CODE LÊN GITHUB
+==============================================
+
+1. Mục đích
+
+File này ghi chú các nội dung không nên đưa lên GitHub để tránh lộ thông tin cá nhân, mật khẩu, cấu hình máy cá nhân hoặc dữ liệu thật.
+
+--------------------------------------------------
+
+2. Không đưa thông tin nhạy cảm lên GitHub
+
+Repository không nên chứa:
+
+- Mật khẩu SQL Server thật
+- Mật khẩu email thật
+- VNPAY HashSecret thật
+- Token API thật
+- File .env
+- File appsettings.Development.json chứa cấu hình máy cá nhân
+- File appsettings.Production.json chứa cấu hình production
+- Dữ liệu khách hàng thật
+- Số điện thoại thật của khách hàng
+- Email thật của khách hàng
+- Địa chỉ thật của khách hàng
+- Dữ liệu thanh toán thật
+
+--------------------------------------------------
+
+3. Không đưa file build lên GitHub
+
+Không nên đưa các thư mục/file sau:
+
+- VanAnhPerfume/VanAnhPerfume/bin/
+- VanAnhPerfume/VanAnhPerfume/obj/
+- .vs/
+- *.user
+- *.suo
+- *.log
+
+Trong ảnh hiện tại, project có các thư mục:
+
+VanAnhPerfume/VanAnhPerfume/bin/
+
+VanAnhPerfume/VanAnhPerfume/obj/
+
+và file:
+
+VanAnhPerfume/VanAnhPerfume/VanAnhPerfume.csproj.user
+
+Các mục này đã được loại trừ bằng file .gitignore.
+
+--------------------------------------------------
+
+4. Không đưa file database cá nhân lên GitHub
+
+Không nên đưa các file:
+
+- *.bak
+- *.mdf
+- *.ldf
+
+Đây là file SQL có dữ liệu mẫu:
+
+Database/VANANHPERFUME_DBFN.sql
+
+--------------------------------------------------
+
+5. Nên dùng file appsettings.example.json
+
+Nên tạo file:
+
+VanAnhPerfume/VanAnhPerfume/appsettings.example.json
+
+File này chỉ chứa cấu hình mẫu, không chứa mật khẩu thật.
+
+Ví dụ:
+
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Server=YOUR_SERVER_NAME;Database=VanAnhPerfume;Trusted_Connection=True;TrustServerCertificate=True;"
+  },
+  "AllowedHosts": "*"
+}
+
+--------------------------------------------------
+
+6. File .gitignore nên có tối thiểu
+
+Nội dung tối thiểu nên có:
+
+bin/
+obj/
+.vs/
+
+*.user
+*.suo
+*.log
+
+appsettings.Development.json
+appsettings.Production.json
+.env
+
+*.bak
+*.mdf
+*.ldf
+
+--------------------------------------------------
+
+7. Checklist trước khi push GitHub
+[ ] Không có mật khẩu SQL Server thật
+[ ] Không có mật khẩu email thật
+[ ] Không có VNPAY HashSecret thật
+[ ] Không có file .env
+[ ] Không có appsettings.Development.json trong danh sách git add
+[ ] Không có appsettings.Production.json trong danh sách git add
+[ ] Không có thư mục bin/
+[ ] Không có thư mục obj/
+[ ] Không có thư mục .vs/
+[ ] Không có file .bak
+[ ] Không có file .mdf
+[ ] Không có file .ldf
+[ ] Không có dữ liệu khách hàng thật

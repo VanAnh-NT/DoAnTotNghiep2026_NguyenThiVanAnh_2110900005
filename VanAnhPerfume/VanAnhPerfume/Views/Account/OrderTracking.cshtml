@@ -1,0 +1,52 @@
+@model VanAnhPerfume.Models.ViewModels.OrderTrackingVM
+@{
+    ViewData["Title"] = "Theo dõi đơn hàng";
+}
+<section class="section-block pt-4">
+<div class="site-container">
+    <div class="row g-4">
+        <div class="col-12 col-md-4">
+            <partial name="_AccountNav" />
+        </div>
+        <div class="col-12 col-md-8">
+            <h3 class="mb-3">Theo dõi đơn #@Model.OrderId</h3>
+            <div class="row g-2 mb-3">
+                <div class="col-md-3"><div class="border p-2">Ngày đặt: <strong>@Model.OrderDate?.ToString("dd/MM/yyyy HH:mm")</strong></div></div>
+                <div class="col-md-3"><div class="border p-2">Trạng thái: <strong>@Model.Status</strong></div></div>
+                <div class="col-md-3"><div class="border p-2">Thanh toán: <strong>@Model.PaymentStatus</strong></div></div>
+                <div class="col-md-3"><div class="border p-2">Tổng tiền: <strong>@Model.TotalAmount.ToString("N0") ₫</strong></div></div>
+            </div>
+            <h5>Timeline</h5>
+            @if (!Model.Timeline.Any())
+            {
+                <ul>
+                    <li>@(Model.OrderDate?.ToString("dd/MM/yyyy HH:mm")) - Đơn hàng được tạo</li>
+                    <li>Trạng thái hiện tại: @Model.Status</li>
+                    <li>Thanh toán hiện tại: @Model.PaymentStatus</li>
+                </ul>
+            }
+            else
+            {
+                <ul>
+                    @foreach (var log in Model.Timeline)
+                    {
+                        <li>@log.CreatedAt.ToString("dd/MM/yyyy HH:mm") - @log.NewStatus @if(!string.IsNullOrWhiteSpace(log.Note)){<span>(@log.Note)</span>} </li>
+                    }
+                </ul>
+            }
+            <h5>Sản phẩm</h5>
+            <div class="table-responsive">
+                <table class="table table-lux">
+                    <thead><tr><th>Sản phẩm</th><th>Size</th><th>SL</th><th>Giá</th></tr></thead>
+                    <tbody>
+                    @foreach (var line in Model.Lines)
+                    {
+                        <tr><td>@line.ProductName</td><td>@line.Size</td><td>@line.Quantity</td><td>@line.Price.ToString("N0") ₫</td></tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+</section>

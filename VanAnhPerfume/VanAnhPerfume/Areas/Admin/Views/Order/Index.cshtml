@@ -1,0 +1,79 @@
+﻿@model IEnumerable<VanAnhPerfume.Models.Entities.Order>
+@{
+    Layout = "_AdminLayout";
+    var stats = ViewBag.Stats as Dictionary<string, int> ?? new();
+    string OBadge(string? s) => s switch
+    {
+        "Pending" => "bg-warning text-dark",
+        "Processing" => "bg-primary",
+        "Shipped" => "bg-info text-dark",
+        "Delivered" => "bg-success",
+        "Completed" => "bg-dark",
+        "Cancelled" => "bg-danger",
+        _ => "bg-secondary"
+    };
+    string PBadge(string? s) => s switch
+    {
+        "Paid" => "bg-success",
+        "Pending" => "bg-secondary",
+        "Failed" => "bg-danger",
+        "Refunded" => "bg-warning text-dark",
+        _ => "bg-secondary"
+    };
+}
+<h4 class="mb-3">Quản lý đơn hàng</h4>
+<div class="d-flex flex-wrap gap-2 mb-3">
+    <a class="btn btn-outline-dark btn-sm" asp-action="Index">Tất cả: @Model.Count()</a>
+    @foreach (var s in new[] { "Pending", "Processing", "Shipped", "Delivered", "Completed", "Cancelled" })
+    {
+        <a class="btn btn-sm @(ViewBag.OrderStatus==s?"btn-dark":"btn-outline-secondary")" asp-action="Index" asp-route-orderStatus="@s">@s: @(stats.ContainsKey(s)?stats[s]:0)</a>
+    }
+</div>
+<form method="get" class="d-flex flex-wrap align-items-center admin-filter-toolbar mb-3">
+    <select name="orderStatus" class="form-select" aria-label="Order status"><option value="">Order status</option>@foreach (var s in new[] { "Pending", "Processing", "Shipped", "Delivered", "Completed", "Cancelled" }){<option value="@s" selected="@(ViewBag.OrderStatus==s)">@s</option>}</select>
+    <select name="paymentStatus" class="form-select" aria-label="Payment status"><option value="">Payment status</option>@foreach (var s in new[] { "Pending", "Paid", "Failed", "Refunded" }){<option value="@s" selected="@(ViewBag.PaymentStatus==s)">@s</option>}</select>
+    <select name="paymentMethod" class="form-select" aria-label="Payment method"><option value="">Payment method</option>@foreach (var s in new[] { "VNPAY", "COD", "BankTransfer" }){<option value="@s" selected="@(ViewBag.PaymentMethod==s)">@s</option>}</select>
+    <input class="form-control" type="date" name="fromDate" value="@(((DateTime?)ViewBag.FromDate)?.ToString("yyyy-MM-dd"))" title="Từ ngày" />
+    <input class="form-control" type="date" name="toDate" value="@(((DateTime?)ViewBag.ToDate)?.ToString("yyyy-MM-dd"))" title="Đến ngày" />
+    <input class="form-control admin-filter-q" name="q" value="@ViewBag.Query" placeholder="Mã đơn/tên/sđt/email" />
+    <select name="sort" class="form-select" aria-label="Sắp xếp"><option value="">Mới nhất</option><option value="total" selected="@(ViewBag.Sort=="total")">Tổng tiền</option></select>
+    <button type="submit" class="btn btn-secondary-lux">Lọc</button>
+    <a class="btn btn-outline-dark" asp-action="Export" asp-route-orderStatus="@ViewBag.OrderStatus" asp-route-paymentStatus="@ViewBag.PaymentStatus" asp-route-paymentMethod="@ViewBag.PaymentMethod" asp-route-q="@ViewBag.Query" asp-route-fromDate="@ViewBag.FromDate" asp-route-toDate="@ViewBag.ToDate" asp-route-sort="@ViewBag.Sort">Export CSV</a>
+</form>
+@if (Model.Any())
+{
+<form method="post" asp-action="BulkConfirm" class="mb-2">
+    <div class="table-responsive">
+        <table class="table table-lux align-middle">
+            <thead><tr><th><input type="checkbox" id="checkAll" /></th><th>Mã đơn</th><th>Khách hàng</th><th>SĐT</th><th>Sản phẩm</th><th>Tổng tiền</th><th>TTĐH</th><th>TTTT</th><th>Ngày đặt</th><th>Action</th></tr></thead>
+            <tbody>
+            @foreach (var item in Model)
+            {
+                var pmethod = item.Payments.OrderByDescending(x => x.PaymentId).Select(x => x.PaymentMethod).FirstOrDefault() ?? "COD";
+                <tr>
+                    <td><input type="checkbox" class="bulk-check" name="ids" value="@item.OrderId" /></td>
+                    <td>@(item.OrderCode ?? $"ORD-{item.OrderId}")</td>
+                    <td>@item.FullName<br/><small>@(item.CustomerEmail ?? item.User?.Email)</small></td>
+                    <td>@item.Phone</td>
+                    <td>@item.OrderDetails.Sum(x => x.Quantity) SP</td>
+                    <td class="fw-bold text-danger">@item.TotalAmount.ToString("N0") ₫<br/><small>@pmethod</small></td>
+                    <td><span class="badge @OBadge(item.Status)">@item.Status</span></td>
+                    <td><span class="badge @PBadge(item.PaymentStatus)">@item.PaymentStatus</span></td>
+                    <td>@item.OrderDate?.ToString("dd/MM/yyyy HH:mm")</td>
+                    <td><a asp-action="Details" asp-route-id="@item.OrderId" class="btn btn-sm btn-dark">Chi tiết</a></td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+    <button class="btn btn-outline-primary">Xác nhận hàng loạt</button>
+</form>
+<nav><ul class="pagination">@for (var i = 1; i <= (int)ViewBag.TotalPages; i++){<li class="page-item @(i==(int)ViewBag.Page?"active":"")"><a class="page-link" asp-action="Index" asp-route-page="@i" asp-route-orderStatus="@ViewBag.OrderStatus" asp-route-paymentStatus="@ViewBag.PaymentStatus" asp-route-paymentMethod="@ViewBag.PaymentMethod" asp-route-q="@ViewBag.Query" asp-route-fromDate="@ViewBag.FromDate" asp-route-toDate="@ViewBag.ToDate" asp-route-sort="@ViewBag.Sort">@i</a></li>}</ul></nav>
+@section Scripts{
+<script>document.getElementById('checkAll')?.addEventListener('change',e=>document.querySelectorAll('.bulk-check').forEach(x=>x.checked=e.target.checked));</script>
+}
+}
+else
+{
+    <partial name="_AdminEmptyList" />
+}

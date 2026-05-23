@@ -1,0 +1,47 @@
+@model IEnumerable<VanAnhPerfume.Models.Entities.ProductVariant>
+@{
+    Layout = "_AdminLayout";
+    var products = ViewBag.Products as List<VanAnhPerfume.Models.Entities.Product> ?? [];
+}
+<h4>Quản lý biến thể sản phẩm</h4>
+<div class="alert alert-info">
+    Biến thể đã được tích hợp trực tiếp trong màn hình thêm/sửa sản phẩm. Trang này chỉ dùng để rà soát nhanh.
+</div>
+<form asp-action="Create" method="post" class="row g-2 mb-3">
+    <div class="col-md-3">
+        <select name="ProductId" class="form-select">@foreach (var p in products){<option value="@p.ProductId">@p.Name</option>}</select>
+    </div>
+    <div class="col-md-2"><input type="text" name="Size" class="form-control" placeholder="Size" /></div>
+    <div class="col-md-2"><input type="text" name="Color" class="form-control" placeholder="Màu" /></div>
+    <div class="col-md-2"><input type="text" name="Material" class="form-control" placeholder="Material" /></div>
+    <div class="col-md-2"><input type="number" name="Price" class="form-control" placeholder="Giá" /></div>
+    <div class="col-md-2"><input type="number" name="Stock" class="form-control" placeholder="Tồn kho" /></div>
+    <div class="col-md-2"><input type="text" name="Sku" class="form-control" placeholder="SKU" /></div>
+    <div class="col-md-1"><button class="btn btn-primary w-100">Thêm</button></div>
+</form>
+<div class="table-responsive">
+    <table class="table table-lux">
+        <thead><tr><th>ID</th><th>Sản phẩm</th><th>Size</th><th>Màu</th><th>Material</th><th>Giá</th><th>Stock</th><th>SKU</th><th></th></tr></thead>
+        <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.VariantId</td>
+                <td>@item.Product?.Name</td>
+                <td>@item.Size</td>
+                <td>@item.Color</td>
+                <td>@item.Material</td>
+                <td>@item.Price.ToString("N0")</td>
+                <td>@item.Stock</td>
+                <td>@item.Sku</td>
+                <td>
+                    <form asp-action="Delete" method="post">
+                        <input type="hidden" name="id" value="@item.VariantId" />
+                        <button class="btn btn-sm btn-danger">Xóa</button>
+                    </form>
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>

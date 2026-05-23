@@ -1,0 +1,84 @@
+@model IEnumerable<VanAnhPerfume.Models.Entities.Payment>
+@{
+    Layout = "_AdminLayout";
+    var stats = ViewBag.Stats as Dictionary<string, int> ?? new();
+    string PBadge(string? s) => s switch
+    {
+        "Paid" => "bg-success",
+        "Pending" => "bg-secondary",
+        "Failed" => "bg-danger",
+        "Refunded" => "bg-warning text-dark",
+        "PartialRefund" => "bg-info text-dark",
+        _ => "bg-secondary"
+    };
+}
+<h4>Quản lý thanh toán</h4>
+<div class="d-flex gap-2 mb-3">
+    <a asp-action="Index" class="btn btn-outline-dark btn-sm">Tất cả</a>
+    @foreach (var s in new[] { "Pending", "Paid", "Failed", "Refunded" }) { <a asp-action="Index" asp-route-paymentStatus="@s" class="btn btn-sm @(ViewBag.PaymentStatus==s?"btn-dark":"btn-outline-secondary")">@s: @(stats.ContainsKey(s)?stats[s]:0)</a> }
+</div>
+<form method="get" class="d-flex flex-wrap align-items-center admin-filter-toolbar mb-3">
+    <select name="paymentStatus" class="form-select" aria-label="PaymentStatus"><option value="">PaymentStatus</option>@foreach (var s in new[] { "Pending", "Paid", "Failed", "Refunded", "PartialRefund" }){<option value="@s" selected="@(ViewBag.PaymentStatus==s)">@s</option>}</select>
+    <select name="paymentMethod" class="form-select" aria-label="Method"><option value="">Method</option>@foreach (var s in new[] { "VNPAY", "COD", "BankTransfer" }){<option value="@s" selected="@(ViewBag.PaymentMethod==s)">@s</option>}</select>
+    <input type="date" name="fromDate" class="form-control" value="@(((DateTime?)ViewBag.FromDate)?.ToString("yyyy-MM-dd"))" title="Từ ngày" />
+    <input type="date" name="toDate" class="form-control" value="@(((DateTime?)ViewBag.ToDate)?.ToString("yyyy-MM-dd"))" title="Đến ngày" />
+    <input name="q" value="@ViewBag.Query" class="form-control admin-filter-q" placeholder="Mã đơn/Mã GD/Tên khách" />
+    <button type="submit" class="btn btn-secondary-lux">Lọc</button>
+</form>
+@if (Model.Any())
+{
+<div class="table-responsive">
+    <table class="table table-lux align-middle">
+        <thead><tr><th>Mã đơn</th><th>Khách hàng</th><th>Phương thức</th><th>Số tiền</th><th>TTTT</th><th>Mã GD</th><th>Ngày TT</th><th>Action</th></tr></thead>
+        <tbody>
+        @foreach (var item in Model)
+        {
+            var txn = item.TransactionId ?? "-";
+            <tr>
+                <td>@(item.Order?.OrderCode ?? $"#{item.OrderId}")</td>
+                <td>@item.Order?.FullName</td>
+                <td>@item.PaymentMethod</td>
+                <td>@item.Amount.ToString("N0") ₫</td>
+                <td><span class="badge @PBadge(item.Status)">@item.Status</span></td>
+                <td title="@txn">@(txn.Length > 20 ? txn[..20] + "..." : txn)</td>
+                <td>@item.PaidAt?.ToString("dd/MM/yyyy HH:mm")</td>
+                <td class="d-flex gap-1">
+                    <a class="btn btn-sm btn-outline-dark" href="/Admin/Order/Details/@item.OrderId">Xem đơn hàng</a>
+                    <button class="btn btn-sm btn-outline-secondary" type="button" onclick="showLogs(@item.PaymentId)">Xem log</button>
+                    @if (item.Status is "Pending" or "Failed" or "Paid")
+                    {
+                        <form asp-action="UpdateStatus" method="post" class="d-flex gap-1">
+                            <input type="hidden" name="paymentId" value="@item.PaymentId" />
+                            <select name="status" class="form-select form-select-sm">
+                                @if (item.Status is "Pending" or "Failed"){<option value="Paid">Paid</option><option value="Failed">Failed</option>}
+                                @if (item.Status == "Paid"){<option value="Refunded">Refunded</option>}
+                            </select>
+                            <input name="note" class="form-control form-control-sm" placeholder="Lý do" required />
+                            <button class="btn btn-sm btn-dark">OK</button>
+                        </form>
+                    }
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>
+<nav><ul class="pagination">@for (var i = 1; i <= (int)ViewBag.TotalPages; i++){<li class="page-item @(i==(int)ViewBag.Page?"active":"")"><a class="page-link" asp-action="Index" asp-route-page="@i" asp-route-paymentStatus="@ViewBag.PaymentStatus" asp-route-paymentMethod="@ViewBag.PaymentMethod" asp-route-fromDate="@ViewBag.FromDate" asp-route-toDate="@ViewBag.ToDate" asp-route-q="@ViewBag.Query">@i</a></li>}</ul></nav>
+}
+else
+{
+    <partial name="_AdminEmptyList" />
+}
+
+<div class="modal fade" id="paymentLogsModal" tabindex="-1">
+  <div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><h6 class="modal-title">Payment Logs</h6><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body" id="paymentLogsBody"></div></div></div>
+</div>
+@section Scripts{
+<script>
+async function showLogs(paymentId){
+  const html = await (await fetch(`/Admin/Payment/Logs?paymentId=${paymentId}`)).text();
+  document.getElementById('paymentLogsBody').innerHTML = html;
+  new bootstrap.Modal(document.getElementById('paymentLogsModal')).show();
+}
+</script>
+}

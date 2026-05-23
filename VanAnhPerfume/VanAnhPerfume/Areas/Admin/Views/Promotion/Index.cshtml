@@ -1,0 +1,112 @@
+@model IEnumerable<VanAnhPerfume.Models.Entities.Promotion>
+@{
+    Layout = "_AdminLayout";
+}
+<h4>Quản lý khuyến mãi</h4>
+@if (TempData["Success"] != null) { <div class="alert alert-success">@TempData["Success"]</div> }
+@if (TempData["Error"] != null) { <div class="alert alert-danger">@TempData["Error"]</div> }
+<p class="text-muted">Checkout sử dụng Promotion làm nguồn giảm giá duy nhất.</p>
+<form method="get" class="d-flex gap-2 mb-3">
+    <input name="q" value="@ViewBag.Query" class="form-control" placeholder="Tìm theo tên chương trình" />
+    <button class="btn btn-secondary-lux">Lọc</button>
+</form>
+<div class="mb-3">
+    <a asp-action="Create" class="btn btn-primary">Thêm khuyến mãi</a>
+</div>
+@if (Model.Any())
+{
+<table class="table table-lux">
+        <thead>
+            <tr>
+                <th>Mã KM</th>
+                <th>Tên khuyến mãi</th>
+                <th>Giảm (%)</th>
+                <th>Đơn tối thiểu</th>
+                <th>Ngày bắt đầu</th>
+                <th>Ngày kết thúc</th>
+                <th>Phạm vi áp dụng</th>
+                <th>Tự động</th>
+                <th>Trạng thái</th>
+                <th>Thao tác</th>
+            </tr>
+        </thead>
+    <tbody>
+    @foreach (var item in Model)
+    {
+        <tr>
+                    <td>@item.PromoId</td>
+
+                    <td>@item.Name</td>
+
+                    <td>@item.DiscountPercent%</td>
+
+                    <td>
+                        @(item.MinOrderValue.HasValue
+                            ? item.MinOrderValue.Value.ToString("N0") + " đ"
+                            : "Không yêu cầu")
+                    </td>
+
+                    <td>@item.StartDate.ToString("dd/MM/yyyy")</td>
+
+                    <td>@item.EndDate.ToString("dd/MM/yyyy")</td>
+
+                    <td>
+                        @if (string.IsNullOrWhiteSpace(item.ApplicableCategoryIds) &&
+                             string.IsNullOrWhiteSpace(item.ApplicableProductIds))
+                        {
+                            <span>Toàn bộ đơn hàng</span>
+                        }
+                        else
+                        {
+                            @if (!string.IsNullOrWhiteSpace(item.ApplicableCategoryIds))
+                            {
+                                <div>Danh mục: @item.ApplicableCategoryIds</div>
+                            }
+
+                            @if (!string.IsNullOrWhiteSpace(item.ApplicableProductIds))
+                            {
+                                <div>Sản phẩm: @item.ApplicableProductIds</div>
+                            }
+                        }
+                    </td>
+
+                    <td>@(item.AutoApply ? "Có" : "Không")</td>
+
+                    <td>
+                        @if (item.IsActive == true)
+                        {
+                            <span class="badge bg-success">Đang kích hoạt</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">Tạm tắt</span>
+                        }
+                    </td>
+            <td>
+                <div class="d-flex gap-2">
+                    <a asp-action="Edit" asp-route-id="@item.PromoId" class="btn btn-sm btn-outline-secondary">Sửa</a>
+                    <form asp-action="Delete" method="post" class="m-0">
+                        <input type="hidden" name="id" value="@item.PromoId" />
+                        <button class="btn btn-sm btn-danger" type="submit">Xóa</button>
+                    </form>
+                </div>
+            </td>
+        </tr>
+    }
+    </tbody>
+</table>
+<nav>
+    <ul class="pagination">
+        @for (var i = 1; i <= (int)ViewBag.TotalPages; i++)
+        {
+            <li class="page-item @(i == (int)ViewBag.Page ? "active" : "")">
+                <a class="page-link" asp-action="Index" asp-route-q="@ViewBag.Query" asp-route-page="@i">@i</a>
+            </li>
+        }
+    </ul>
+</nav>
+}
+else
+{
+    <partial name="_AdminEmptyList" />
+}

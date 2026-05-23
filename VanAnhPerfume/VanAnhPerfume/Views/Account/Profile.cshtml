@@ -1,0 +1,162 @@
+@model VanAnhPerfume.Models.ViewModels.AccountDashboardVM
+@{
+    ViewData["Title"] = "Tài khoản";
+    var tab = ViewBag.ActiveTab as string ?? "profile";
+}
+<section class="section-block pt-4 account-dashboard-section">
+<div class="site-container">
+    <div class="account-dashboard-head d-flex flex-wrap align-items-start justify-content-between gap-3 mb-4">
+        <div>
+            <h3 class="mb-1">Tài khoản</h3>
+            <p class="text-muted small mb-0">Chọn mục bên dưới để xem hoặc chỉnh sửa.</p>
+        </div>
+        <div class="d-flex flex-wrap gap-2 align-items-center account-dashboard-actions ms-auto">
+            @if (User.IsInRole("Admin"))
+            {
+                <a asp-area="Admin" asp-controller="Main" asp-action="Index" class="btn btn-secondary-lux">Bảng điều khiển</a>
+            }
+            <a asp-controller="Account" asp-action="Logout" class="btn btn-secondary-lux">Đăng xuất</a>
+        </div>
+    </div>
+
+            <ul class="nav nav-tabs flex-nowrap overflow-auto mb-3 account-dashboard-tabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button type="button" class="nav-link @(tab == "profile" ? "active" : null)" id="tab-profile" data-bs-toggle="tab" data-bs-target="#pane-profile" data-account-tab="profile" role="tab" aria-controls="pane-profile" aria-selected="@(tab == "profile" ? "true" : "false")">Thông tin</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button type="button" class="nav-link @(tab == "orders" ? "active" : null)" id="tab-orders" data-bs-toggle="tab" data-bs-target="#pane-orders" data-account-tab="orders" role="tab" aria-controls="pane-orders" aria-selected="@(tab == "orders" ? "true" : "false")">Đơn hàng</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button type="button" class="nav-link @(tab == "wishlist" ? "active" : null)" id="tab-wishlist" data-bs-toggle="tab" data-bs-target="#pane-wishlist" data-account-tab="wishlist" role="tab" aria-controls="pane-wishlist" aria-selected="@(tab == "wishlist" ? "true" : "false")">Yêu thích</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button type="button" class="nav-link @(tab == "password" ? "active" : null)" id="tab-password" data-bs-toggle="tab" data-bs-target="#pane-password" data-account-tab="password" role="tab" aria-controls="pane-password" aria-selected="@(tab == "password" ? "true" : "false")">Mật khẩu</button>
+                </li>
+            </ul>
+
+            <div class="tab-content">
+                <div class="tab-pane fade @(tab == "profile" ? "show active" : null)" id="pane-profile" role="tabpanel" aria-labelledby="tab-profile" tabindex="0">
+                    @if (TempData["ProfileMessage"] != null)
+                    {
+                        <div class="alert alert-success">@TempData["ProfileMessage"]</div>
+                    }
+                    <form asp-action="UpdateProfile" method="post" class="border p-3">
+                        @Html.AntiForgeryToken()
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                        <div class="mb-3"><label class="form-label">Họ tên</label><input asp-for="Profile.FullName" class="form-control rounded-0" /><span asp-validation-for="Profile.FullName" class="text-danger"></span></div>
+                        <div class="mb-3"><label class="form-label">Email</label><input asp-for="Profile.Email" class="form-control rounded-0" readonly /></div>
+                        <div class="mb-3"><label class="form-label">Số điện thoại</label><input asp-for="Profile.Phone" class="form-control rounded-0" /><span asp-validation-for="Profile.Phone" class="text-danger"></span></div>
+                        <button class="btn btn-primary-lux">Lưu thông tin</button>
+                    </form>
+                </div>
+
+                <div class="tab-pane fade @(tab == "orders" ? "show active" : null)" id="pane-orders" role="tabpanel" aria-labelledby="tab-orders" tabindex="0">
+                    <h4 class="h5 mb-3">Đơn hàng của tôi</h4>
+                    @if (!Model.Orders.Any())
+                    {
+                        <div class="border rounded-0 p-4 text-center">
+                            <p class="mb-2">Chưa có đơn hàng nào trong lịch sử.</p>
+                            <a href="/Product" class="btn btn-primary-lux">Tiếp tục mua sắm</a>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-lux align-middle">
+                                <thead><tr><th>Mã đơn</th><th>Ngày đặt</th><th>Tổng tiền</th><th>Trạng thái</th><th>Thanh toán</th><th></th></tr></thead>
+                                <tbody>
+                                @foreach (var item in Model.Orders)
+                                {
+                                    var statusClass = item.Status == "Pending" ? "bg-warning text-dark" : item.Status == "Shipping" ? "bg-info text-white" : item.Status == "Completed" ? "bg-success text-white" : "bg-danger text-white";
+                                    <tr>
+                                        <td>#@item.OrderId</td>
+                                        <td>@item.OrderDate?.ToString("dd/MM/yyyy HH:mm")</td>
+                                        <td>@item.TotalAmount.ToString("N0") ₫</td>
+                                        <td><span class="badge @statusClass rounded-0">@item.Status</span></td>
+                                        <td>@item.PaymentStatus</td>
+                                        <td><a asp-action="OrderTracking" asp-route-id="@item.OrderId" class="btn btn-secondary-lux py-2 px-3">Chi tiết</a></td>
+                                    </tr>
+                                }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+
+                <div class="tab-pane fade @(tab == "wishlist" ? "show active" : null)" id="pane-wishlist" role="tabpanel" aria-labelledby="tab-wishlist" tabindex="0">
+                    <h4 class="h5 mb-3">Danh sách yêu thích</h4>
+                    @if (!Model.Wishlist.Any())
+                    {
+                        <div class="border p-4">Bạn chưa có sản phẩm yêu thích.</div>
+                    }
+                    else
+                    {
+                        <div class="product-grid wishlist-grid">
+                        @foreach (var item in Model.Wishlist)
+                        {
+                            <article class="product-card">
+                                <a class="product-thumb d-block" asp-controller="Product" asp-action="Detail" asp-route-id="@item.ProductId">
+                                    <img class="product-thumb-main" src="@item.ImageUrl" alt="@item.ProductName" />
+                                    <img class="product-thumb-hover" src="@item.ImageUrl" alt="@item.ProductName" />
+                                </a>
+                                <div class="p-3">
+                                    <h6><a class="text-dark text-decoration-none" asp-controller="Product" asp-action="Detail" asp-route-id="@item.ProductId">@item.ProductName</a></h6>
+                                    <div class="fw-bold">@item.Price.ToString("N0") ₫</div>
+                                    <a class="btn btn-outline-danger rounded-0 py-2 px-3 mt-2" asp-controller="Wishlist" asp-action="Remove" asp-route-productId="@item.ProductId" asp-route-returnUrl="@Url.Action("Profile", "Account", new { tab = "wishlist" })">Xóa</a>
+                                </div>
+                            </article>
+                        }
+                        </div>
+                    }
+                </div>
+
+                <div class="tab-pane fade @(tab == "password" ? "show active" : null)" id="pane-password" role="tabpanel" aria-labelledby="tab-password" tabindex="0">
+                    @if (TempData["PasswordMessage"] != null)
+                    {
+                        <div class="alert alert-success">@TempData["PasswordMessage"]</div>
+                    }
+                    <form asp-action="ChangePassword" method="post" class="border p-3">
+                        @Html.AntiForgeryToken()
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                        <div class="mb-3">
+                            <label class="form-label">Mật khẩu hiện tại</label>
+                            <input asp-for="ChangePassword.CurrentPassword" type="password" class="form-control rounded-0" autocomplete="current-password" />
+                            <span asp-validation-for="ChangePassword.CurrentPassword" class="text-danger"></span>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Mật khẩu mới</label>
+                            <input asp-for="ChangePassword.NewPassword" type="password" class="form-control rounded-0" autocomplete="new-password" />
+                            <span asp-validation-for="ChangePassword.NewPassword" class="text-danger"></span>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Xác nhận mật khẩu mới</label>
+                            <input asp-for="ChangePassword.ConfirmPassword" type="password" class="form-control rounded-0" autocomplete="new-password" />
+                            <span asp-validation-for="ChangePassword.ConfirmPassword" class="text-danger"></span>
+                        </div>
+                        <button class="btn btn-primary-lux">Cập nhật</button>
+                    </form>
+                </div>
+            </div>
+</div>
+</section>
+
+@section Scripts {
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        (function () {
+            function syncTabQuery(key) {
+                try {
+                    var u = new URL(window.location.href);
+                    u.searchParams.set('tab', key);
+                    window.history.replaceState(null, '', u.pathname + u.search + u.hash);
+                } catch (_) { }
+            }
+            document.querySelectorAll('[data-account-tab]').forEach(function (btn) {
+                btn.addEventListener('shown.bs.tab', function () {
+                    syncTabQuery(btn.getAttribute('data-account-tab') || 'profile');
+                });
+            });
+        })();
+    </script>
+}

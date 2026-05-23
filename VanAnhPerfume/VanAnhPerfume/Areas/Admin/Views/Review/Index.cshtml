@@ -1,0 +1,64 @@
+@model IEnumerable<VanAnhPerfume.Models.Entities.Review>
+@{
+    Layout = "_AdminLayout";
+    var stats = ViewBag.Stats as Dictionary<string, int> ?? new();
+    string Stars(int n) => new string('★', n) + new string('☆', 5 - n);
+}
+<h4>Quản lý đánh giá</h4>
+<div class="d-flex gap-2 mb-3">
+    <a asp-action="Index" class="btn btn-sm btn-outline-dark">Tất cả: @Model.Count()</a>
+    <a asp-action="Index" asp-route-status="Pending" class="btn btn-sm btn-outline-secondary">Chờ duyệt: @stats.GetValueOrDefault("Pending")</a>
+    <a asp-action="Index" asp-route-status="Approved" class="btn btn-sm btn-outline-success">Đã duyệt: @stats.GetValueOrDefault("Approved")</a>
+    <a asp-action="Index" asp-route-status="Rejected" class="btn btn-sm btn-outline-danger">Từ chối: @stats.GetValueOrDefault("Rejected")</a>
+</div>
+<form method="get" class="d-flex flex-wrap align-items-center admin-filter-toolbar mb-3">
+    <select name="status" class="form-select" aria-label="Status"><option value="">Status</option><option value="Pending" selected="@(ViewBag.Status=="Pending")">Pending</option><option value="Approved" selected="@(ViewBag.Status=="Approved")">Approved</option><option value="Rejected" selected="@(ViewBag.Status=="Rejected")">Rejected</option></select>
+    <select name="rating" class="form-select" aria-label="Sao"><option value="">Sao</option>@for(var i=1;i<=5;i++){<option value="@i" selected="@(ViewBag.Rating?.ToString()==i.ToString())">@i</option>}</select>
+    <input name="product" value="@ViewBag.Product" class="form-control" placeholder="Sản phẩm" />
+    <input name="fromDate" type="date" value="@(((DateTime?)ViewBag.FromDate)?.ToString("yyyy-MM-dd"))" class="form-control" title="Từ ngày" />
+    <input name="toDate" type="date" value="@(((DateTime?)ViewBag.ToDate)?.ToString("yyyy-MM-dd"))" class="form-control" title="Đến ngày" />
+    <label class="d-flex align-items-center gap-1 mb-0 text-nowrap small"><input type="checkbox" name="verifiedOnly" value="true" class="form-check-input" checked="@(ViewBag.VerifiedOnly==true)" />Mua thật</label>
+    <select name="sort" class="form-select" aria-label="Sắp xếp"><option value="">Mới nhất</option><option value="rating_desc" selected="@(ViewBag.Sort=="rating_desc")">Sao cao</option><option value="rating_asc" selected="@(ViewBag.Sort=="rating_asc")">Sao thấp</option><option value="product" selected="@(ViewBag.Sort=="product")">Sản phẩm</option></select>
+    <input name="q" value="@ViewBag.Query" class="form-control admin-filter-q" placeholder="Tên người đánh giá / nội dung" />
+    <button type="submit" class="btn btn-secondary-lux">Lọc</button>
+</form>
+@if (Model.Any())
+{
+<form method="post">
+<div class="d-flex gap-2 mb-2"><button formaction="/Admin/Review/BulkApprove" class="btn btn-sm btn-outline-success">Duyệt Pending đã chọn</button><button formaction="/Admin/Review/BulkDelete" class="btn btn-sm btn-outline-danger">Xóa đã chọn</button></div>
+<table class="table table-lux align-middle">
+    <thead><tr><th></th><th>Sản phẩm</th><th>Người đánh giá</th><th>Rating</th><th>Tiêu đề</th><th>Ngày</th><th>Mua thật</th><th>Trạng thái</th><th>Action</th></tr></thead>
+    <tbody>
+    @foreach (var item in Model)
+    {
+        <tr>
+            <td><input type="checkbox" name="ids" value="@item.ReviewId" /></td>
+            <td><a href="/Product/Detail/@item.ProductId" target="_blank">@item.Product?.Name</a></td>
+            <td>@(item.ReviewerName ?? item.User?.FullName)<br/><small>@(item.ReviewerEmail ?? item.User?.Email)</small></td>
+            <td class="text-warning">@Stars(item.Rating)</td>
+            <td><strong>@item.Title</strong><div class="small text-muted">@(item.Content?.Length > 90 ? item.Content[..90] + "..." : item.Content)</div></td>
+            <td>@item.CreatedAt?.ToString("dd/MM/yyyy")</td>
+            <td><span class="badge @(item.IsVerifiedPurchase?"bg-success":"bg-secondary")">@(item.IsVerifiedPurchase?"✓ Đã mua":"Chưa xác minh")</span></td>
+            <td><span class="badge @(item.Status=="Approved"?"bg-success":item.Status=="Rejected"?"bg-danger":"bg-secondary")">@item.Status</span></td>
+            <td>
+                <details>
+                    <summary>Chi tiết</summary>
+                    <div class="small mt-2">@item.Content</div>
+                    @if (!string.IsNullOrWhiteSpace(item.AdminReply)){<div class="alert alert-light mt-2"><strong>Phản hồi admin:</strong> @item.AdminReply</div>}
+                    <form asp-action="Reply" method="post" class="d-flex gap-1 mt-2"><input type="hidden" name="id" value="@item.ReviewId" /><input name="adminReply" class="form-control form-control-sm" placeholder="Phản hồi admin" /><button class="btn btn-sm btn-outline-dark">Lưu</button></form>
+                </details>
+                <form asp-action="Approve" method="post" class="d-inline"><input type="hidden" name="id" value="@item.ReviewId" /><button class="btn btn-sm btn-outline-success">Duyệt</button></form>
+                <form asp-action="Reject" method="post" class="d-inline"><input type="hidden" name="id" value="@item.ReviewId" /><button class="btn btn-sm btn-outline-warning">Từ chối</button></form>
+                <form asp-action="Delete" method="post" class="d-inline"><input type="hidden" name="id" value="@item.ReviewId" /><button class="btn btn-sm btn-outline-danger" onclick="return confirm('Xóa review này?')">Xóa</button></form>
+            </td>
+        </tr>
+    }
+    </tbody>
+</table>
+</form>
+<nav><ul class="pagination">@for(var i=1;i<=(int)ViewBag.TotalPages;i++){<li class="page-item @(i==(int)ViewBag.Page?"active":"")"><a class="page-link" asp-action="Index" asp-route-page="@i" asp-route-status="@ViewBag.Status" asp-route-rating="@ViewBag.Rating" asp-route-product="@ViewBag.Product" asp-route-fromDate="@ViewBag.FromDate" asp-route-toDate="@ViewBag.ToDate" asp-route-verifiedOnly="@ViewBag.VerifiedOnly" asp-route-q="@ViewBag.Query" asp-route-sort="@ViewBag.Sort">@i</a></li>}</ul></nav>
+}
+else
+{
+    <partial name="_AdminEmptyList" />
+}

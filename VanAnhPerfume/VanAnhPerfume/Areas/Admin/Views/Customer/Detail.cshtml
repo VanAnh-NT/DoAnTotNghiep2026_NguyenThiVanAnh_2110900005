@@ -1,0 +1,235 @@
+@model VanAnhPerfume.Models.ViewModels.AdminCustomerDetailVm
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Chi tiết khách hàng";
+    var u = Model.User;
+    string AvatarLetter(string? name) => string.IsNullOrWhiteSpace(name) ? "?" : char.ToUpperInvariant(name.Trim()[0]).ToString();
+    var hue = (u.UserId * 137) % 360;
+    string GenderVi(string? g) => g?.Trim().ToLowerInvariant() switch
+    {
+        "male" or "nam" => "Nam",
+        "female" or "nữ" or "nu" => "Nữ",
+        _ => string.IsNullOrWhiteSpace(g) ? "—" : g!
+    };
+}
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="d-flex flex-wrap gap-3 align-items-start mb-4 pb-3 border-bottom">
+            @if (!string.IsNullOrWhiteSpace(u.Avatar))
+            {
+                <img src="@Url.Content(u.Avatar)" alt="" class="rounded-circle border" style="width:96px;height:96px;object-fit:cover" />
+            }
+            else
+            {
+                <span class="rounded-circle d-inline-flex align-items-center justify-content-center text-white fw-bold fs-2 border"
+                      style="width:96px;height:96px;background:hsl(@hue,65%,45%)">@AvatarLetter(u.FullName)</span>
+            }
+            <div class="flex-grow-1">
+                <h4 class="mb-1">@u.FullName</h4>
+                <div class="text-muted small">@u.Email</div>
+                <div class="mt-2">
+                    @if (u.IsActive)
+                    {
+                        <span class="badge bg-success">Hoạt động</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-danger">Bị khóa</span>
+                    }
+                </div>
+            </div>
+            <div>
+                @if (u.IsActive)
+                {
+                    <form asp-area="Admin" asp-controller="Customer" asp-action="SetActive" method="post" class="d-inline"
+                          onsubmit="return confirm('Khóa tài khoản này? Khách hàng sẽ không thể đăng nhập.');">
+                        <input type="hidden" name="id" value="@u.UserId" />
+                        <input type="hidden" name="activate" value="false" />
+                        <button type="submit" class="btn btn-outline-danger">Khóa tài khoản</button>
+                    </form>
+                }
+                else
+                {
+                    <form asp-area="Admin" asp-controller="Customer" asp-action="SetActive" method="post" class="d-inline">
+                        <input type="hidden" name="id" value="@u.UserId" />
+                        <input type="hidden" name="activate" value="true" />
+                        <button type="submit" class="btn btn-outline-success">Mở khóa</button>
+                    </form>
+                }
+                <a class="btn btn-outline-secondary ms-1" asp-action="Index">← Danh sách</a>
+            </div>
+        </div>
+
+        <ul class="nav nav-tabs mb-3" id="custTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="tab-info" data-bs-toggle="tab" data-bs-target="#pane-info" type="button" role="tab">Thông tin cá nhân</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="tab-orders" data-bs-toggle="tab" data-bs-target="#pane-orders" type="button" role="tab">Lịch sử đơn hàng</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="tab-reviews" data-bs-toggle="tab" data-bs-target="#pane-reviews" type="button" role="tab">Đánh giá đã gửi</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="tab-wish" data-bs-toggle="tab" data-bs-target="#pane-wish" type="button" role="tab">Yêu thích</button>
+            </li>
+        </ul>
+
+        <div class="tab-content">
+            <div class="tab-pane fade show active" id="pane-info" role="tabpanel">
+                <dl class="row small mb-0">
+                    <dt class="col-sm-3">Họ tên</dt><dd class="col-sm-9">@u.FullName</dd>
+                    <dt class="col-sm-3">Email</dt><dd class="col-sm-9">@u.Email</dd>
+                    <dt class="col-sm-3">SĐT</dt><dd class="col-sm-9">@(u.Phone ?? "—")</dd>
+                    <dt class="col-sm-3">Giới tính</dt><dd class="col-sm-9">@GenderVi(u.Gender)</dd>
+                    <dt class="col-sm-3">Ngày sinh</dt><dd class="col-sm-9">@(u.DateOfBirth?.ToString("dd/MM/yyyy") ?? "—")</dd>
+                    <dt class="col-sm-3">Ngày đăng ký</dt><dd class="col-sm-9">@(u.CreatedAt?.ToString("dd/MM/yyyy HH:mm") ?? "—")</dd>
+                    <dt class="col-sm-3">Đăng nhập cuối</dt><dd class="col-sm-9">@(u.LastLoginAt?.ToString("dd/MM/yyyy HH:mm") ?? "—")</dd>
+                    <dt class="col-sm-3">Email đã xác minh</dt>
+                    <dd class="col-sm-9">@(u.IsEmailVerified ? "Đã xác minh" : "Chưa xác minh")</dd>
+                </dl>
+
+                <h6 class="mt-4 mb-2">Địa chỉ giao hàng đã lưu</h6>
+                @if (!Model.Addresses.Any())
+                {
+                    <p class="text-muted small mb-0">Chưa có địa chỉ.</p>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Người nhận</th><th>SĐT</th><th>Địa chỉ</th><th>Mặc định</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            @foreach (var a in Model.Addresses)
+                            {
+                                <tr>
+                                    <td>@a.ReceiverName</td>
+                                    <td>@a.Phone</td>
+                                    <td>
+                                        @a.StreetAddress, @a.Ward, @a.District, @a.City
+                                        <div class="text-muted small">Lưu: @a.CreatedAt.ToString("dd/MM/yyyy")</div>
+                                    </td>
+                                    <td>@(a.IsDefault == true ? "Có" : "Không")</td>
+                                </tr>
+                            }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+
+            <div class="tab-pane fade" id="pane-orders" role="tabpanel">
+                <div class="row g-2 mb-3 small">
+                    <div class="col-md-3"><div class="border rounded p-2">Tổng đơn<br /><strong>@Model.OrdersSummary.TotalOrders</strong></div></div>
+                    <div class="col-md-3"><div class="border rounded p-2">Tổng chi tiêu (đã thanh toán)<br /><strong>@Model.OrdersSummary.TotalPaidSpend.ToString("N0") ₫</strong></div></div>
+                    <div class="col-md-3"><div class="border rounded p-2">Đơn hủy<br /><strong>@Model.OrdersSummary.CancelledOrders</strong></div></div>
+                    <div class="col-md-3"><div class="border rounded p-2">Tỷ lệ hoàn thành<br /><strong>@Model.OrdersSummary.CompletionRatePercent.ToString("0.#")%</strong></div></div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-lux table-sm align-middle">
+                        <thead>
+                            <tr>
+                                <th>Mã đơn</th>
+                                <th>Ngày</th>
+                                <th>Sản phẩm</th>
+                                <th class="text-end">Tổng</th>
+                                <th>TTĐH</th>
+                                <th>TTTT</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        @foreach (var o in Model.Orders)
+                        {
+                            <tr>
+                                <td>@(string.IsNullOrEmpty(o.OrderCode) ? "#" + o.OrderId : o.OrderCode)</td>
+                                <td>@(o.OrderDate?.ToString("dd/MM/yyyy HH:mm") ?? "—")</td>
+                                <td class="small">@o.ProductSummary</td>
+                                <td class="text-end">@o.TotalAmount.ToString("N0") ₫</td>
+                                <td>@o.Status</td>
+                                <td>@o.PaymentStatus</td>
+                                <td><a class="btn btn-sm btn-outline-primary" asp-area="Admin" asp-controller="Order" asp-action="Details" asp-route-id="@o.OrderId">Chi tiết</a></td>
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+
+                @if (Model.OrdersTotalPages > 1)
+                {
+                    <nav class="d-flex flex-wrap align-items-center gap-2 mt-2">
+                        <a class="btn btn-sm btn-outline-secondary @(Model.OrdersPage <= 1 ? "disabled" : null)"
+                           asp-action="Detail" asp-route-id="@u.UserId" asp-route-orderPage="@(Model.OrdersPage - 1)">Trước</a>
+                        <span class="text-muted small">Trang @Model.OrdersPage / @Model.OrdersTotalPages</span>
+                        <a class="btn btn-sm btn-outline-secondary @(Model.OrdersPage >= Model.OrdersTotalPages ? "disabled" : null)"
+                           asp-action="Detail" asp-route-id="@u.UserId" asp-route-orderPage="@(Model.OrdersPage + 1)">Sau</a>
+                    </nav>
+                }
+            </div>
+
+            <div class="tab-pane fade" id="pane-reviews" role="tabpanel">
+                <p class="small text-muted mb-2">
+                    <a asp-area="Admin" asp-controller="Review" asp-action="Index">Mở trang quản lý đánh giá</a>
+                </p>
+                @if (!Model.Reviews.Any())
+                {
+                    <p class="text-muted">Khách chưa gửi đánh giá.</p>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Sản phẩm</th><th>Sao</th><th>Nội dung</th><th>Trạng thái</th><th>Ngày</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            @foreach (var r in Model.Reviews)
+                            {
+                                <tr>
+                                    <td>@r.ProductName</td>
+                                    <td>@r.Rating</td>
+                                    <td class="small">@(string.IsNullOrWhiteSpace(r.Content) ? "—" : (r.Content!.Length > 120 ? r.Content[..120] + "…" : r.Content))</td>
+                                    <td>@r.Status</td>
+                                    <td class="small">@(r.CreatedAt?.ToString("dd/MM/yyyy") ?? "—")</td>
+                                </tr>
+                            }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+
+            <div class="tab-pane fade" id="pane-wish" role="tabpanel">
+                @if (!Model.WishlistInDatabase)
+                {
+                    <p class="text-muted mb-0">Danh sách yêu thích hiện lưu theo phiên (session), không có dữ liệu trên máy chủ cho khách hàng này.</p>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm position-sticky" style="top:1rem">
+            <div class="card-body small">
+                <h6 class="card-title">Thống kê</h6>
+                <p class="mb-2">Hạng khách hàng: <span class="badge @Model.Sidebar.Tier.CssClass">@Model.Sidebar.Tier.Label</span></p>
+                <ul class="list-unstyled mb-0">
+                    <li class="mb-1">Tổng đơn hàng: <strong>@Model.Sidebar.TotalOrders</strong></li>
+                    <li class="mb-1">Hoàn thành: <strong>@Model.Sidebar.CompletedOrders</strong> (@Model.Sidebar.CompletionRatePercent.ToString("0.#")%)</li>
+                    <li class="mb-1">Đã hủy: <strong>@Model.Sidebar.CancelledOrders</strong></li>
+                    <li class="mb-1">Tổng chi tiêu (đã thanh toán): <strong>@Model.Sidebar.TotalPaidSpend.ToString("N0") ₫</strong></li>
+                    <li class="mb-1">Trung bình/đơn: <strong>@Model.Sidebar.AverageOrderValue.ToString("N0") ₫</strong></li>
+                    <li>Đã đánh giá: <strong>@Model.Sidebar.ReviewedProductCount</strong> sản phẩm</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>

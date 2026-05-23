@@ -1,0 +1,25 @@
+@{
+    var action = ViewContext.RouteData.Values["action"]?.ToString();
+    var controller = ViewContext.RouteData.Values["controller"]?.ToString();
+    var authed = User.Identity?.IsAuthenticated == true;
+    var accountTab = ViewBag.ActiveTab as string ?? Context.Request.Query["tab"].ToString() ?? "";
+    if (string.IsNullOrEmpty(accountTab) && action == "Profile") accountTab = "profile";
+    string Active(string key) => accountTab.Equals(key, StringComparison.OrdinalIgnoreCase) ? "fw-bold border-start border-3 border-warning" : "text-dark";
+}
+<aside style="background:var(--color-section);padding:16px;border:1px solid var(--color-border);">
+    @if (authed)
+    {
+        <a class="d-block py-2 ps-2 text-decoration-none @(Active("profile"))" href="/Account/Profile">Thông tin cá nhân</a>
+        <a class="d-block py-2 ps-2 text-decoration-none @(Active("orders"))" href="/Account/Profile?tab=orders">Đơn hàng của tôi</a>
+        <a class="d-block py-2 ps-2 text-decoration-none @(Active("wishlist"))" href="/Account/Profile?tab=wishlist">Danh sách yêu thích</a>
+        <a class="d-block py-2 ps-2 text-decoration-none @(Active("password"))" href="/Account/Profile?tab=password">Đổi mật khẩu</a>
+    }
+    else
+    {
+        <a class="d-block py-2 ps-2 text-decoration-none @(action=="Profile"?"fw-bold border-start border-3 border-warning":"text-dark")" href="/Account/Profile">Thông tin cá nhân</a>
+        <a class="d-block py-2 ps-2 text-decoration-none @(action=="MyOrders"?"fw-bold border-start border-3 border-warning":"text-dark")" href="/Account/MyOrders">Đơn hàng của tôi</a>
+        <a class="d-block py-2 ps-2 text-decoration-none @(controller=="Wishlist"?"fw-bold border-start border-3 border-warning":"text-dark")" href="/Wishlist">Danh sách yêu thích</a>
+        <a class="d-block py-2 ps-2 text-decoration-none @(action=="ChangePassword"?"fw-bold border-start border-3 border-warning":"text-dark")" href="/Account/ChangePassword">Đổi mật khẩu</a>
+    }
+    <a class="d-block py-2 ps-2 text-decoration-none text-dark" href="/Account/Logout">Đăng xuất</a>
+</aside>

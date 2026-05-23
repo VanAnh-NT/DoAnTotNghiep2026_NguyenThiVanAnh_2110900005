@@ -1,0 +1,85 @@
+@model IEnumerable<VanAnhPerfume.Models.ViewModels.AdminInventoryRowVM>
+@{
+    Layout = "_AdminLayout";
+}
+<h4>Quản lý tồn kho tổng quan</h4>
+@if (TempData["Success"] != null) { <div class="alert alert-success">@TempData["Success"]</div> }
+<div class="row g-3 mb-3">
+    <div class="col-md-3"><div class="border p-3 rounded-2"><small>Tổng SKU</small><h4>@ViewBag.TotalSku</h4></div></div>
+    <div class="col-md-3"><div class="border p-3 rounded-2"><small>SKU còn hàng</small><h4>@ViewBag.InStockSku</h4></div></div>
+    <div class="col-md-3"><div class="border p-3 rounded-2"><small>SKU sắp hết</small><h4>@ViewBag.LowSku</h4></div></div>
+    <div class="col-md-3"><div class="border p-3 rounded-2"><small>SKU hết hàng</small><h4>@ViewBag.OutSku</h4></div></div>
+</div>
+<form method="get" class="d-flex flex-wrap align-items-center admin-filter-toolbar mb-3">
+    <input class="form-control admin-filter-q" name="q" value="@ViewBag.Query" placeholder="Tên SP hoặc SKU" />
+    <select class="form-select" name="categoryId" aria-label="Danh mục"><option value="">Danh mục</option>@foreach (var c in (ViewBag.Categories as List<VanAnhPerfume.Models.Entities.Category> ?? [])){<option value="@c.CategoryId" selected="@(ViewBag.CategoryId==c.CategoryId)">@c.Name</option>}</select>
+    <select class="form-select" name="brandId" aria-label="Thương hiệu"><option value="">Thương hiệu</option>@foreach (var b in (ViewBag.Brands as List<VanAnhPerfume.Models.Entities.Brand> ?? [])){<option value="@b.BrandId" selected="@(ViewBag.BrandId==b.BrandId)">@b.Name</option>}</select>
+    <select class="form-select" name="status" aria-label="Trạng thái"><option value="">Trạng thái</option><option value="instock" selected="@(ViewBag.Status=="instock")">Còn hàng</option><option value="low" selected="@(ViewBag.Status=="low")">Sắp hết</option><option value="out" selected="@(ViewBag.Status=="out")">Hết hàng</option></select>
+    <select class="form-select" name="sort" aria-label="Sắp xếp"><option value="">Sort</option><option value="sellable_asc" selected="@(ViewBag.Sort=="sellable_asc")">Sellable tăng</option><option value="sellable_desc" selected="@(ViewBag.Sort=="sellable_desc")">Sellable giảm</option><option value="sold_desc" selected="@(ViewBag.Sort=="sold_desc")">Bán chạy</option></select>
+    <button type="submit" class="btn btn-secondary-lux">Lọc</button>
+</form>
+<div class="d-flex gap-2 mb-3">
+    <a class="btn btn-outline-primary" asp-action="BulkImport">Nhập kho hàng loạt</a>
+    <a class="btn btn-outline-dark" asp-action="Logs">Xem lịch sử</a>
+</div>
+@if (Model.Any())
+{
+<div class="table-responsive">
+    <table class="table table-lux align-middle">
+        <thead><tr><th>Ảnh</th><th>Sản phẩm</th><th>Biến thể</th><th>SKU</th><th>Có thể bán</th><th>Đã đặt</th><th>Đã bán</th><th>Ngưỡng</th><th>Trạng thái</th><th>Action</th></tr></thead>
+        <tbody>
+        @foreach (var row in Model)
+        {
+            var bg = row.IsOutOfStock ? "#fff5f5" : (row.IsLowStock ? "#fffbf0" : "white");
+            <tr style="background:@bg">
+                <td><img src="@(row.ImageUrl ?? "/images/default-perfume.jpg")" style="width:52px;height:52px;object-fit:cover;border-radius:6px;" /></td>
+                <td>@row.ProductName</td>
+                <td>@row.VariantLabel</td>
+                <td>@row.Sku</td>
+                <td><strong>@row.Sellable</strong></td>
+                <td>@row.QuantityReserved</td>
+                <td>@row.QuantitySold</td>
+                <td>@row.LowStockThreshold</td>
+                <td>
+                    @if (row.IsOutOfStock) { <span class="badge bg-danger">Hết hàng</span> }
+                    else if (row.IsLowStock) { <span class="badge bg-warning text-dark">Sắp hết</span> }
+                    else { <span class="badge bg-success">Bình thường</span> }
+                </td>
+                <td class="d-flex gap-1">
+                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#import-@row.VariantId">Nhập kho</button>
+                    <button class="btn btn-sm btn-outline-dark" data-bs-toggle="modal" data-bs-target="#adjust-@row.VariantId">Điều chỉnh</button>
+                    <a class="btn btn-sm btn-outline-secondary" asp-action="Logs" asp-route-variantId="@row.VariantId">Lịch sử</a>
+                </td>
+            </tr>
+            <div class="modal fade" id="import-@row.VariantId" tabindex="-1">
+                <div class="modal-dialog"><div class="modal-content"><form asp-action="ImportStock" method="post">
+                    <div class="modal-header"><h6>Nhập kho @row.Sku</h6></div>
+                    <div class="modal-body">
+                        <input type="hidden" name="variantId" value="@row.VariantId" />
+                        <label>Số lượng nhập</label><input class="form-control" type="number" name="quantity" min="1" required />
+                        <label class="mt-2">Ghi chú</label><input class="form-control" name="note" />
+                    </div>
+                    <div class="modal-footer"><button class="btn btn-primary">Xác nhận</button></div>
+                </form></div></div>
+            </div>
+            <div class="modal fade" id="adjust-@row.VariantId" tabindex="-1">
+                <div class="modal-dialog"><div class="modal-content"><form asp-action="AdjustStock" method="post">
+                    <div class="modal-header"><h6>Điều chỉnh @row.Sku</h6></div>
+                    <div class="modal-body">
+                        <input type="hidden" name="variantId" value="@row.VariantId" />
+                        <label>Số lượng mới</label><input class="form-control" type="number" name="newQuantity" min="0" value="@row.QuantityAvailable" required />
+                        <label class="mt-2">Lý do *</label><input class="form-control" name="reason" required />
+                    </div>
+                    <div class="modal-footer"><button class="btn btn-dark">Cập nhật</button></div>
+                </form></div></div>
+            </div>
+        }
+        </tbody>
+    </table>
+</div>
+<nav><ul class="pagination">@for (var i = 1; i <= (int)ViewBag.TotalPages; i++){<li class="page-item @(i==(int)ViewBag.Page?"active":"")"><a class="page-link" asp-action="Index" asp-route-page="@i" asp-route-q="@ViewBag.Query" asp-route-categoryId="@ViewBag.CategoryId" asp-route-brandId="@ViewBag.BrandId" asp-route-status="@ViewBag.Status" asp-route-sort="@ViewBag.Sort">@i</a></li>}</ul></nav>
+}
+else
+{
+    <partial name="_AdminEmptyList" />
+}

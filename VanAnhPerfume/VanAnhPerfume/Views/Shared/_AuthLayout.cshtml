@@ -1,0 +1,45 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - VanAnh Perfume</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/auth.css" asp-append-version="true" />
+</head>
+<body class="auth-body">
+    <div class="auth-backdrop" aria-hidden="true"></div>
+
+    <div class="auth-wrap">
+        <div class="auth-card">
+            <header class="auth-brand" role="banner">
+                <h1 class="auth-brand-title">VANANH PERFUME</h1>
+                <div class="auth-brand-line" aria-hidden="true">
+                    <span class="auth-brand-line-left"></span>
+                    <span class="auth-brand-diamond">✦</span>
+                    <span class="auth-brand-line-right"></span>
+                </div>
+            </header>
+            <div class="auth-body-content">
+                @RenderBody()
+            </div>
+        </div>
+    </div>
+
+    <footer class="auth-trust" role="contentinfo">
+        <div class="auth-trust-inner">
+            <div><i class="bi bi-shield-check" aria-hidden="true"></i> 100% CHÍNH HÃNG</div>
+            <div><i class="bi bi-truck" aria-hidden="true"></i> MIỄN PHÍ GIAO HÀNG</div>
+            <div><i class="bi bi-stars" aria-hidden="true"></i> SỐNG ĐẬM CHẤT HƯƠNG RIÊNG</div>
+        </div>
+    </footer>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

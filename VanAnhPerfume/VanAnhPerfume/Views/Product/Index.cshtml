@@ -1,0 +1,320 @@
+@model VanAnhPerfume.Models.ViewModels.ProductListVM
+@{
+    ViewData["Title"] = "Sản phẩm";
+    var selectedConcentrations = (ViewBag.Concentrations as List<string>) ?? [];
+    var brandList = Model.Brands?.ToList() ?? [];
+    var categoryList = Model.Categories?.ToList() ?? [];
+    var parentCategories = categoryList.Where(x => x.ParentId == null).ToList();
+
+    var filterOpenBrand = !string.IsNullOrWhiteSpace(Model.Brand);
+    var filterOpenCategory = !string.IsNullOrWhiteSpace(Model.Category);
+    var filterOpenGender = !string.IsNullOrWhiteSpace(Model.Gender);
+    var filterOpenConcentration = selectedConcentrations.Count > 0;
+    var filterOpenPrice = Model.MinPrice.HasValue || Model.MaxPrice.HasValue;
+}
+<section class="section-block pt-4">
+<div class="site-container">
+    <div class="small text-muted mb-3">Trang chủ > Sản phẩm</div>
+    <div class="d-flex d-lg-none mb-3">
+        <button class="btn btn-secondary-lux w-100" type="button" data-bs-toggle="offcanvas" data-bs-target="#productFilterCanvas">Bộ lọc</button>
+    </div>
+    <div class="listing-layout">
+        <aside class="listing-sidebar listing-sidebar-card">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="label-uppercase">Bộ lọc</span>
+                <a href="/Product" class="small text-decoration-none js-product-ajax-reset">Xóa tất cả</a>
+            </div>
+            <form method="get" id="productFilterForm">
+                <div class="mb-2"><input class="form-control rounded-0" name="q" value="@Model.Query" placeholder="Tìm sản phẩm" /></div>
+                <div class="accordion mb-2" id="filterAccordion">
+                    <div class="accordion-item rounded-0">
+                        <h2 class="accordion-header"><button class="accordion-button rounded-0 @(filterOpenBrand ? null : "collapsed")" data-bs-toggle="collapse" data-bs-target="#brandCollapse" type="button">Thương hiệu</button></h2>
+                        <div id="brandCollapse" class="accordion-collapse collapse @(filterOpenBrand ? "show" : null)">
+                            <div class="accordion-body">
+                                <div class="filter-scroll-list" id="brandFilterList">
+                                    <div class="form-check">
+                                        <input class="form-check-input js-autosubmit" type="radio" name="brand" value="" id="b-all" checked="@string.IsNullOrEmpty(Model.Brand)">
+                                        <label class="form-check-label" for="b-all">Tất cả</label>
+                                    </div>
+                                    @for (var i = 0; i < brandList.Count; i++)
+                                    {
+                                        var bid = $"brand-{i}";
+                                        var item = brandList[i];
+                                        var extraClass = i >= 12 ? "brand-extra d-none" : string.Empty;
+                                        <div class="form-check @extraClass">
+                                            <input class="form-check-input js-autosubmit" type="radio" name="brand" value="@item.Slug" id="@bid" checked="@(Model.Brand == item.Slug)">
+                                            <label class="form-check-label" for="@bid">@item.Name</label>
+                                        </div>
+                                    }
+                                </div>
+                                @if (brandList.Count > 12)
+                                {
+                                    <button type="button" class="btn btn-link p-0 mt-2 filter-toggle-more" id="brandToggleBtn" data-expanded="false">
+                                        Xem thêm
+                                    </button>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item rounded-0">
+                        <h2 class="accordion-header"><button class="accordion-button rounded-0 @(filterOpenCategory ? null : "collapsed")" data-bs-toggle="collapse" data-bs-target="#categoryCollapse" type="button">Danh mục</button></h2>
+                        <div id="categoryCollapse" class="accordion-collapse collapse @(filterOpenCategory ? "show" : null)">
+                            <div class="accordion-body">
+                                <div class="filter-scroll-list filter-scroll-list-sm">
+                                    <div class="form-check">
+                                        <input class="form-check-input js-autosubmit" type="radio" name="category" value="" id="cat-all" checked="@string.IsNullOrEmpty(Model.Category)">
+                                        <label class="form-check-label" for="cat-all">Tất cả</label>
+                                    </div>
+                                    @for (var i = 0; i < parentCategories.Count; i++)
+                                    {
+                                        var cid = $"category-{i}";
+                                        var item = parentCategories[i];
+                                        <div class="form-check">
+                                            <input class="form-check-input js-autosubmit" type="radio" name="category" value="@item.Slug" id="@cid" checked="@(Model.Category == item.Slug)">
+                                            <label class="form-check-label" for="@cid">@item.Name</label>
+                                        </div>
+                                        @foreach (var child in categoryList.Where(x => x.ParentId == item.Id))
+                                        {
+                                            <div class="form-check ms-3">
+                                                <input class="form-check-input js-autosubmit" type="radio" name="category" value="@child.Slug" id="cat-@child.Id" checked="@(Model.Category == child.Slug)">
+                                                <label class="form-check-label" for="cat-@child.Id">- @child.Name</label>
+                                            </div>
+                                        }
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item rounded-0">
+                        <h2 class="accordion-header"><button class="accordion-button rounded-0 @(filterOpenGender ? null : "collapsed")" data-bs-toggle="collapse" data-bs-target="#genderCollapse" type="button">Giới tính</button></h2>
+                        <div id="genderCollapse" class="accordion-collapse collapse @(filterOpenGender ? "show" : null)">
+                            <div class="accordion-body">
+                                <div class="form-check"><input class="form-check-input js-autosubmit" type="radio" name="gender" value="" id="g-all" checked="@string.IsNullOrEmpty(Model.Gender)"><label class="form-check-label" for="g-all">Tất cả</label></div>
+                                <div class="form-check"><input class="form-check-input js-autosubmit" type="radio" name="gender" value="Nam" id="g-nam" checked="@(Model.Gender=="Nam")"><label class="form-check-label" for="g-nam">Nam</label></div>
+                                <div class="form-check"><input class="form-check-input js-autosubmit" type="radio" name="gender" value="Nữ" id="g-nu" checked="@(Model.Gender=="Nữ")"><label class="form-check-label" for="g-nu">Nữ</label></div>
+                                <div class="form-check"><input class="form-check-input js-autosubmit" type="radio" name="gender" value="Unisex" id="g-unisex" checked="@(Model.Gender=="Unisex")"><label class="form-check-label" for="g-unisex">Unisex</label></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item rounded-0">
+                        <h2 class="accordion-header"><button class="accordion-button rounded-0 @(filterOpenConcentration ? null : "collapsed")" data-bs-toggle="collapse" data-bs-target="#conCollapse" type="button">Nồng độ</button></h2>
+                        <div id="conCollapse" class="accordion-collapse collapse @(filterOpenConcentration ? "show" : null)">
+                            <div class="accordion-body">
+                                @foreach (var opt in new[] { "Parfum", "EDP", "EDT", "EDC" })
+                                {
+                                    var cid = $"c-{opt}";
+                                    <div class="form-check">
+                                        <input class="form-check-input js-autosubmit" type="checkbox" name="concentration" value="@opt" id="@cid" checked="@selectedConcentrations.Contains(opt)">
+                                        <label class="form-check-label" for="@cid">@opt</label>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item rounded-0">
+                        <h2 class="accordion-header"><button class="accordion-button rounded-0 @(filterOpenPrice ? null : "collapsed")" data-bs-toggle="collapse" data-bs-target="#priceCollapse" type="button">Khoảng giá</button></h2>
+                        <div id="priceCollapse" class="accordion-collapse collapse @(filterOpenPrice ? "show" : null)">
+                            <div class="accordion-body">
+                                <div class="mb-2"><input class="form-control rounded-0" type="number" name="minPrice" placeholder="Từ" value="@Model.MinPrice" /></div>
+                                <div class="mb-2"><input class="form-control rounded-0" type="number" name="maxPrice" placeholder="Đến" value="@Model.MaxPrice" /></div>
+                                <button class="btn btn-secondary-lux w-100" type="submit">Áp dụng</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <button class="btn btn-primary-lux w-100">Áp dụng</button>
+            </form>
+        </aside>
+        <div id="productListingMain" class="product-listing-ajax-target">
+            @await Html.PartialAsync("_ProductListingMain", Model)
+        </div>
+    </div>
+</div>
+</section>
+<div class="offcanvas offcanvas-start" tabindex="-1" id="productFilterCanvas">
+    <div class="offcanvas-header"><h5 class="offcanvas-title">Bộ lọc</h5><button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button></div>
+    <div class="offcanvas-body">
+        <form method="get" id="productFilterOffcanvasForm">
+            <div class="mb-2"><input class="form-control rounded-0" name="q" value="@Model.Query" placeholder="Tìm sản phẩm" /></div>
+            <div class="mb-2"><select class="form-select rounded-0" name="brand"><option value="">Tất cả thương hiệu</option>@foreach (var item in brandList){<option value="@item.Slug" selected="@(Model.Brand == item.Slug)">@item.Name</option>}</select></div>
+            <div class="mb-2">
+                <select class="form-select rounded-0" name="category">
+                    <option value="">Tất cả danh mục</option>
+                    @foreach (var item in parentCategories)
+                    {
+                        <option value="@item.Slug" selected="@(Model.Category == item.Slug)">@item.Name</option>
+                        @foreach (var child in categoryList.Where(x => x.ParentId == item.Id))
+                        {
+                            <option value="@child.Slug" selected="@(Model.Category == child.Slug)">- @child.Name</option>
+                        }
+                    }
+                </select>
+            </div>
+            <div class="mb-2"><select class="form-select rounded-0" name="gender"><option value="">Giới tính</option><option value="Nam" selected="@(Model.Gender=="Nam")">Nam</option><option value="Nữ" selected="@(Model.Gender=="Nữ")">Nữ</option><option value="Unisex" selected="@(Model.Gender=="Unisex")">Unisex</option></select></div>
+            <div class="mb-2"><button class="btn btn-primary-lux w-100">Áp dụng</button></div>
+        </form>
+    </div>
+</div>
+@section Scripts {
+<script>
+    function buildProductListUrlFromForm(form) {
+        const fd = new FormData(form);
+        const params = new URLSearchParams();
+        for (const [k, v] of fd.entries()) {
+            if (v === '' || v === undefined || v === null) continue;
+            params.append(k, v);
+        }
+        const qs = params.toString();
+        return qs ? '/Product?' + qs : '/Product';
+    }
+
+    async function fetchProductListing(url, options) {
+        const opts = options || {};
+        const main = document.getElementById('productListingMain');
+        if (!main) return;
+        main.classList.add('opacity-50');
+        try {
+            const res = await fetch(url, {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                credentials: 'same-origin'
+            });
+            if (!res.ok) throw new Error('Network');
+            const html = await res.text();
+            main.innerHTML = html;
+            const u = new URL(url, window.location.origin);
+            if (!opts.skipHistory) {
+                history.pushState({}, '', u.pathname + u.search);
+            }
+            syncProductFilterFormsFromSearchParams(u.searchParams);
+            const ocEl = document.getElementById('productFilterCanvas');
+            if (ocEl && typeof bootstrap !== 'undefined') {
+                const oc = bootstrap.Offcanvas.getInstance(ocEl);
+                if (oc) oc.hide();
+            }
+        } catch (e) {
+            window.location.href = url;
+        } finally {
+            main.classList.remove('opacity-50');
+        }
+    }
+
+    function syncProductFilterFormsFromSearchParams(sp) {
+        const desktop = document.getElementById('productFilterForm');
+        if (desktop) {
+            const qIn = desktop.querySelector('[name=q]');
+            if (qIn) qIn.value = sp.get('q') || '';
+            const brand = sp.get('brand') || '';
+            desktop.querySelectorAll('[name=brand]').forEach(r => { r.checked = r.value === brand; });
+            const cat = sp.get('category') || '';
+            desktop.querySelectorAll('[name=category]').forEach(r => { r.checked = r.value === cat; });
+            const gen = sp.get('gender') || '';
+            desktop.querySelectorAll('[name=gender]').forEach(r => { r.checked = r.value === gen; });
+            const conc = sp.getAll('concentration');
+            desktop.querySelectorAll('[name=concentration]').forEach(cb => {
+                cb.checked = conc.includes(cb.value);
+            });
+            const minP = desktop.querySelector('[name=minPrice]');
+            const maxP = desktop.querySelector('[name=maxPrice]');
+            if (minP) minP.value = sp.get('minPrice') || '';
+            if (maxP) maxP.value = sp.get('maxPrice') || '';
+        }
+        syncFilterAccordionCollapse(sp);
+        const mobile = document.getElementById('productFilterOffcanvasForm');
+        if (mobile) {
+            const mq = mobile.querySelector('[name=q]');
+            if (mq) mq.value = sp.get('q') || '';
+            const mb = mobile.querySelector('[name=brand]');
+            if (mb) mb.value = sp.get('brand') || '';
+            const mc = mobile.querySelector('[name=category]');
+            if (mc) mc.value = sp.get('category') || '';
+            const mg = mobile.querySelector('[name=gender]');
+            if (mg) mg.value = sp.get('gender') || '';
+        }
+    }
+
+    function syncFilterAccordionCollapse(sp) {
+        const has = (k) => {
+            const v = sp.get(k);
+            return v !== null && v !== '';
+        };
+        const map = [
+            { target: '#brandCollapse', open: has('brand') },
+            { target: '#categoryCollapse', open: has('category') },
+            { target: '#genderCollapse', open: has('gender') },
+            { target: '#conCollapse', open: (sp.getAll('concentration') || []).length > 0 },
+            { target: '#priceCollapse', open: has('minPrice') || has('maxPrice') }
+        ];
+        map.forEach(({ target, open }) => {
+            const pane = document.querySelector('#filterAccordion ' + target);
+            const btn = document.querySelector('#filterAccordion [data-bs-target="' + target + '"]');
+            if (!pane || !btn) return;
+            if (open) {
+                pane.classList.add('show');
+                btn.classList.remove('collapsed');
+            } else {
+                pane.classList.remove('show');
+                btn.classList.add('collapsed');
+            }
+        });
+    }
+
+    document.getElementById('productFilterForm')?.addEventListener('submit', function (e) {
+        e.preventDefault();
+        fetchProductListing(buildProductListUrlFromForm(e.target));
+    });
+
+    document.getElementById('productFilterOffcanvasForm')?.addEventListener('submit', function (e) {
+        e.preventDefault();
+        fetchProductListing(buildProductListUrlFromForm(e.target));
+    });
+
+    document.querySelectorAll('.js-autosubmit').forEach(el => {
+        el.addEventListener('change', () => {
+            const form = document.getElementById('productFilterForm');
+            if (form) fetchProductListing(buildProductListUrlFromForm(form));
+        });
+    });
+
+    document.getElementById('productListingMain')?.addEventListener('change', function (e) {
+        const sel = e.target.closest('.listing-sort-select');
+        if (!sel) return;
+        const form = sel.closest('form');
+        if (form) fetchProductListing(buildProductListUrlFromForm(form));
+    });
+
+    document.getElementById('productListingMain')?.addEventListener('click', function (e) {
+        const link = e.target.closest('a.page-link');
+        if (!link || !link.href) return;
+        e.preventDefault();
+        fetchProductListing(link.href);
+    });
+
+    document.querySelector('.js-product-ajax-reset')?.addEventListener('click', function (e) {
+        e.preventDefault();
+        fetchProductListing('/Product');
+    });
+
+    window.addEventListener('popstate', function () {
+        fetchProductListing(window.location.href, { skipHistory: true });
+    });
+
+    const brandToggleBtn = document.getElementById('brandToggleBtn');
+    const brandFilterList = document.getElementById('brandFilterList');
+    brandToggleBtn?.addEventListener('click', () => {
+        const expanded = brandToggleBtn.getAttribute('data-expanded') === 'true';
+        brandFilterList?.querySelectorAll('.brand-extra').forEach(el => {
+            el.classList.toggle('d-none', expanded);
+        });
+        brandToggleBtn.setAttribute('data-expanded', (!expanded).toString());
+        brandToggleBtn.textContent = expanded ? 'Xem thêm' : 'Thu gọn';
+    });
+
+    const filterCanvas = document.getElementById('productFilterCanvas');
+    filterCanvas?.addEventListener('shown.bs.offcanvas', () => {
+        document.body.classList.add('product-filter-open');
+    });
+    filterCanvas?.addEventListener('hidden.bs.offcanvas', () => {
+        document.body.classList.remove('product-filter-open');
+    });
+</script>
+}

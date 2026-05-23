@@ -1,0 +1,84 @@
+@model IEnumerable<VanAnhPerfume.Models.Entities.Category>
+@{
+    Layout = "_AdminLayout";
+    var all = Model.ToList();
+    var parents = all.Where(x => x.ParentId == null).OrderBy(x => x.SortOrder).ThenBy(x => x.Name).ToList();
+    var counts = ViewBag.ProductCounts as Dictionary<int, int> ?? new();
+    string Img(string? url) => string.IsNullOrWhiteSpace(url) ? "/images/default-perfume.jpg" : url;
+}
+<h4>Quản lý danh mục</h4>
+@if (TempData["Success"] != null) { <div class="alert alert-success">@TempData["Success"]</div> }
+@if (TempData["Error"] != null) { <div class="alert alert-danger">@TempData["Error"]</div> }
+<a asp-action="Create" class="btn btn-primary mb-3">Thêm mới</a>
+<table class="table table-lux align-middle">
+    <thead><tr><th></th><th>Ảnh</th><th>Tên</th><th>Slug</th><th>Số sản phẩm</th><th>Danh mục cha</th><th>Thứ tự</th><th>Trạng thái</th><th>Action</th></tr></thead>
+    <tbody id="categorySortList">
+    @foreach (var parent in parents)
+    {
+        <tr data-id="@parent.CategoryId">
+            <td class="text-muted">☰</td>
+            <td><img src="@Img(parent.ImageUrl)" width="34" height="34" style="object-fit:cover;border-radius:6px" /></td>
+            <td><strong>@parent.Name</strong></td>
+            <td>@parent.Slug</td>
+            <td>@counts.GetValueOrDefault(parent.CategoryId)</td>
+            <td>-</td>
+            <td>@parent.SortOrder</td>
+            <td class="d-flex gap-2 align-items-center">
+                <button class="btn btn-sm @(parent.IsActive?"btn-success":"btn-outline-secondary")" onclick="toggleCategory(@parent.CategoryId,this)">@(parent.IsActive?"Active":"Inactive")</button>
+            </td>
+            <td>
+                <div class="d-flex gap-2">
+                    <a asp-action="Edit" asp-route-id="@parent.CategoryId" class="btn btn-sm btn-outline-secondary">Sửa</a>
+                    <form asp-action="Delete" method="post">
+                        <input type="hidden" name="id" value="@parent.CategoryId" />
+                        <button class="btn btn-sm btn-outline-danger" onclick="return confirm('Xóa danh mục này?')">Xóa</button>
+                    </form>
+                </div>
+            </td>
+        </tr>
+        @foreach (var child in all.Where(x => x.ParentId == parent.CategoryId).OrderBy(x => x.SortOrder).ThenBy(x => x.Name))
+        {
+            <tr data-id="@child.CategoryId" class="table-light">
+                <td class="text-muted">☰</td>
+                <td><img src="@Img(child.ImageUrl)" width="30" height="30" style="object-fit:cover;border-radius:6px" /></td>
+                <td class="ps-4">└ @child.Name</td>
+                <td>@child.Slug</td>
+                <td>@counts.GetValueOrDefault(child.CategoryId)</td>
+                <td>@parent.Name</td>
+                <td>@child.SortOrder</td>
+                <td class="d-flex gap-2 align-items-center">
+                    <button class="btn btn-sm @(child.IsActive?"btn-success":"btn-outline-secondary")" onclick="toggleCategory(@child.CategoryId,this)">@(child.IsActive?"Active":"Inactive")</button>
+                </td>
+                <td>
+                    <div class="d-flex gap-2">
+                        <a asp-action="Edit" asp-route-id="@child.CategoryId" class="btn btn-sm btn-outline-secondary">Sửa</a>
+                        <form asp-action="Delete" method="post">
+                            <input type="hidden" name="id" value="@child.CategoryId" />
+                            <button class="btn btn-sm btn-outline-danger" onclick="return confirm('Xóa danh mục này?')">Xóa</button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+        }
+    }
+    </tbody>
+</table>
+@section Scripts{
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+<script>
+new Sortable(document.getElementById('categorySortList'), {
+  animation: 150,
+  onEnd: async function(){
+    const rows = [...document.querySelectorAll('#categorySortList tr[data-id]')];
+    const payload = rows.map((x,i)=>({id: parseInt(x.dataset.id), order: i+1}));
+    await fetch('/Admin/Category/UpdateSort',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    location.reload();
+  }
+});
+async function toggleCategory(id, btn){
+  const res = await fetch('/Admin/Category/ToggleActive',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:`id=${id}`});
+  const data = await res.json();
+  if(data.success){ btn.className = `btn btn-sm ${data.isActive?'btn-success':'btn-outline-secondary'}`; btn.textContent = data.isActive?'Active':'Inactive';}
+}
+</script>
+}

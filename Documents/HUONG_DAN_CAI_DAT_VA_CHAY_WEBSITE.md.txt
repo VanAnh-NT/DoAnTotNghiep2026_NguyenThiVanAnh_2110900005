@@ -1,0 +1,639 @@
+# HƯỚNG DẪN CÀI ĐẶT VÀ CHẠY WEBSITE VAN ANH PERFUME
+
+## 1. Giới thiệu dự án
+
+**VAN ANH PERFUME** là website quản lý và bán hàng nước hoa trực tuyến.
+
+Website được xây dựng nhằm hỗ trợ khách hàng xem sản phẩm, tìm kiếm sản phẩm, xem chi tiết sản phẩm, thêm sản phẩm vào giỏ hàng, đặt hàng và theo dõi đơn hàng. Đồng thời, hệ thống cung cấp khu vực quản trị để Admin quản lý sản phẩm, danh mục, thương hiệu, đơn hàng, người dùng và các nội dung liên quan.
+
+## 2. Chức năng chính của hệ thống
+
+### 2.1. Phía khách hàng
+
+- Xem trang chủ.
+- Xem danh sách sản phẩm.
+- Tìm kiếm sản phẩm.
+- Xem chi tiết sản phẩm.
+- Thêm sản phẩm vào giỏ hàng.
+- Cập nhật số lượng sản phẩm trong giỏ hàng.
+- Đặt hàng.
+- Đăng ký tài khoản.
+- Đăng nhập tài khoản.
+- Quản lý thông tin cá nhân.
+- Xem lịch sử đơn hàng.
+
+### 2.2. Phía quản trị viên
+
+- Đăng nhập trang quản trị.
+- Quản lý sản phẩm.
+- Quản lý danh mục.
+- Quản lý thương hiệu.
+- Quản lý biến thể sản phẩm.
+- Quản lý hình ảnh sản phẩm.
+- Quản lý tồn kho.
+- Quản lý đơn hàng.
+- Quản lý người dùng.
+- Quản lý bài viết hoặc tin tức nếu hệ thống có chức năng này.
+- Quản lý banner hoặc khuyến mãi nếu hệ thống có chức năng này.
+
+---
+
+## 3. Cấu trúc thư mục dự án
+
+Cấu trúc thư mục chính:
+
+ProjectCode/
+├── VanAnhPerfume/
+│   └── VanAnhPerfume/
+│       ├── Areas/
+│       ├── Controllers/
+│       ├── Data/
+│       ├── Filters/
+│       ├── Helpers/
+│       ├── Models/
+│       ├── Properties/
+│       ├── Repositories/
+│       ├── Services/
+│       ├── Views/
+│       ├── wwwroot/
+│       ├── appsettings.json
+│       ├── appsettings.example.json
+│       ├── Program.cs
+│       └── VanAnhPerfume.csproj
+│
+├── Database/
+│   ├── VANANHPERFUME_DBFN.sql
+│   └── HuongDanImportDatabase.txt
+│
+├── Documents/
+│   ├── HUONG_DAN_CAI_DAT_VA_CHAY_WEBSITE.md
+│   ├── HuongDanCauHinhConnectionString.txt
+│   ├── TaiKhoanDemo.txt
+│   └── GhiChuBaoMat.txt
+│
+├── README.md
+└── .gitignore
+
+
+## 4. Các file quan trọng trong repository
+
+| Đường dẫn | Ý nghĩa |
+|---|---|
+| `VanAnhPerfume/VanAnhPerfume/` | Thư mục project chính |
+| `VanAnhPerfume/VanAnhPerfume/Program.cs` | File cấu hình khởi động ứng dụng |
+| `VanAnhPerfume/VanAnhPerfume/VanAnhPerfume.csproj` | File project ASP.NET Core |
+| `VanAnhPerfume/VanAnhPerfume/appsettings.json` | File cấu hình ứng dụng |
+| `VanAnhPerfume/VanAnhPerfume/appsettings.example.json` | File cấu hình mẫu |
+| `Database/VANANHPERFUME_DBFN.sql` | File SQL tạo database và dữ liệu mẫu |
+| `Database/HuongDanImportDatabase.txt` | Hướng dẫn import database |
+| `Documents/HuongDanCauHinhConnectionString.txt` | Hướng dẫn cấu hình chuỗi kết nối |
+| `Documents/TaiKhoanDemo.txt` | Tài khoản demo |
+| `Documents/GhiChuBaoMat.txt` | Ghi chú bảo mật trước khi đưa source lên GitHub |
+| `.gitignore` | Danh sách file/thư mục không đưa lên GitHub |
+| `README.md` | Giới thiệu tổng quan repository |
+
+---
+
+## 5. Môi trường yêu cầu
+
+Để chạy được website, máy tính cần cài đặt các phần mềm sau:
+
+| Phần mềm | Mục đích |
+|---|---|
+| Visual Studio | Mở, build và chạy project |
+| .NET SDK | Chạy ứng dụng ASP.NET Core |
+| SQL Server | Lưu trữ database |
+| SQL Server Management Studio | Import và quản lý database |
+| Google Chrome hoặc Microsoft Edge | Trình duyệt để kiểm thử website |
+| Git | Quản lý source code và đẩy lên GitHub |
+
+Khuyến nghị sử dụng:
+
+- Windows 10 hoặc Windows 11.
+- Visual Studio 2026
+- SQL Server Developer hoặc SQL Server Express.
+- SQL Server Management Studio bản mới.
+
+
+## 6. Các bước cài đặt và chạy website
+
+Quy trình cài đặt gồm 4 bước chính:
+
+Bước 1: Import database
+Bước 2: Cấu hình connection string
+Bước 3: Mở và build project
+Bước 4: Chạy website và kiểm thử
+
+---
+
+# BƯỚC 1: IMPORT DATABASE
+
+## 1.1. Vị trí file database
+
+File database nằm tại: Database/VANANHPERFUME_DBFN.sql
+
+
+## 1.2. Mở SQL Server Management Studio
+
+Mở phần mềm: SQL Server Management Studio
+
+Sau đó kết nối tới SQL Server.
+
+Một số Server name thường dùng:
+
+localhost
+
+hoặc:
+
+.
+
+hoặc:
+
+.\SQLEXPRESS
+
+Nếu dùng Windows Authentication, chọn:
+
+Authentication: Windows Authentication
+
+Sau đó bấm **Connect**.
+
+## 1.3. Tạo database mới
+Trong SQL Server Management Studio:
+1. Nhấn chuột phải vào thư mục **Databases**.
+2. Chọn **New Database**.
+3. Nhập tên database: VanAnhPerfume
+4. Bấm **OK**.
+
+## 1.4. Mở file SQL
+Chọn: File > Open > File
+Sau đó chọn file ở thư mục Database: .../Database/VANANHPERFUME_DBFN.sql
+
+## 1.5. Chọn đúng database trước khi chạy
+Trên thanh công cụ của SQL Server Management Studio, chọn database: VanAnhPerfume
+Không nên để database là `master` khi chạy script, trừ khi trong file SQL đã có lệnh: USE VanAnhPerfume
+
+## 1.6. Chạy script SQL
+Bấm nút **Execute** hoặc nhấn phím: F5
+Nếu chạy thành công, SQL Server Management Studio sẽ hiển thị thông báo: Commands completed successfully.
+
+## 1.7. Kiểm tra database sau khi import
+Sau khi chạy file SQL:
+1. Nhấn chuột phải vào database `VanAnhPerfume`.
+2. Chọn **Refresh**.
+3. Mở thư mục **Tables**.
+4. Kiểm tra các bảng đã được tạo.
+
+Một số bảng có thể có trong hệ thống:
+Users
+Roles
+Products
+Categories
+Brands
+ProductImages
+ProductVariants
+Inventories
+Orders
+OrderDetails
+Payments
+News
+Banners
+Reviews
+Promotions
+```
+
+## 1.8. Kiểm tra dữ liệu mẫu
+Có thể chạy thử các câu lệnh sau:
+SELECT * FROM Users;
+SELECT * FROM Roles;
+SELECT * FROM Products;
+SELECT * FROM Categories;
+SELECT * FROM Brands;
+```
+Nếu các bảng có dữ liệu thì database đã import thành công cả cấu trúc bảng và dữ liệu mẫu.
+
+## 1.9. Xem hướng dẫn database chi tiết
+Nếu cần xem riêng phần hướng dẫn import database, mở file: Database/HuongDanImportDatabase.txt
+
+---
+
+# BƯỚC 2: CẤU HÌNH CONNECTION STRING
+
+## 2.1. Vị trí file cấu hình
+Đường dẫn tương đối:
+VanAnhPerfume/VanAnhPerfume
+
+Các file cấu hình thường dùng:
+VanAnhPerfume/VanAnhPerfume/appsettings.json
+VanAnhPerfume/VanAnhPerfume/appsettings.Development.json
+VanAnhPerfume/VanAnhPerfume/appsettings.example.json
+
+## 2.2. Cách cấu hình an toàn
+
+Nếu có file: VanAnhPerfume/VanAnhPerfume/appsettings.example.json
+
+Hãy copy file này thành: VanAnhPerfume/VanAnhPerfume/appsettings.Development.json
+
+Sau đó sửa connection string trong `appsettings.Development.json`.
+
+
+## 2.3. Connection string khi dùng SQL Server Express
+Nếu SQL Server của bạn là `SQLEXPRESS`, dùng mẫu sau:
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Server=.\\SQLEXPRESS;Database=VanAnhPerfume;Trusted_Connection=True;TrustServerCertificate=True;"
+  }
+}
+
+## 2.4. Connection string khi dùng SQL Server mặc định
+Nếu Server name là `localhost`, dùng mẫu sau:
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Server=localhost;Database=VanAnhPerfume;Trusted_Connection=True;TrustServerCertificate=True;"
+  }
+}
+
+Hoặc:
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Server=.;Database=VanAnhPerfume;Trusted_Connection=True;TrustServerCertificate=True;"
+  }
+}
+
+## 2.5. Connection string khi dùng tài khoản SQL Server
+Nếu dùng tài khoản `sa` hoặc tài khoản SQL Server riêng, dùng mẫu sau:
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Server=localhost;Database=VanAnhPerfume;User Id=sa;Password=YOUR_PASSWORD;TrustServerCertificate=True;"
+  }
+}
+
+
+## 2.6. Kiểm tra tên connection string trong Program.cs
+
+Mở file: VanAnhPerfume/VanAnhPerfume/Program.cs
+
+Tìm dòng cấu hình database, ví dụ:
+builder.Configuration.GetConnectionString("DefaultConnection")
+
+Nếu code gọi: DefaultConnection
+thì trong `appsettings.json` hoặc `appsettings.Development.json` cũng phải có:
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "..."
+  }
+}
+Nếu tên không khớp, website sẽ không kết nối được database.
+
+## 2.7. Xem hướng dẫn connection string chi tiết
+
+Nếu cần xem riêng phần hướng dẫn cấu hình chuỗi kết nối, mở file: Documents/HuongDanCauHinhConnectionString.txt
+
+---
+
+---
+
+# BƯỚC 2.8: CẤU HÌNH GỬI EMAIL BẰNG GMAIL SMTP
+
+Website có sử dụng SMTP để gửi email, ví dụ: gửi email xác nhận, thông báo đơn hàng hoặc thông báo hệ thống.
+
+Dự án sử dụng Gmail SMTP với cấu hình mẫu như sau:
+"Smtp": {
+  "Host": "smtp.gmail.com",
+  "Port": "587",
+  "Username": "your-email@example.com",
+  "Password": "YOUR_EMAIL_APP_PASSWORD",
+  "From": "your-email@example.com"
+}
+
+## 2.8.1. Ý nghĩa từng trường cấu hình SMTP
+
+| Trường | Ý nghĩa | Cách điền |
+| `Host` | Máy chủ SMTP dùng để gửi email | Giữ nguyên `smtp.gmail.com` |
+| `Port` | Cổng gửi email SMTP | Giữ nguyên `587` |
+| `Username` | Tài khoản Gmail dùng để gửi email | Điền đầy đủ địa chỉ Gmail, ví dụ `example@gmail.com` |
+| `Password` | Mật khẩu ứng dụng Gmail | Điền Gmail App Password, không dùng mật khẩu Gmail thường |
+| `From` | Email hiển thị là người gửi | Thường điền giống `Username` |
+
+## 2.8.2. Không dùng mật khẩu Gmail thường
+
+Không điền mật khẩu đăng nhập Gmail thông thường vào file cấu hình.
+
+Để gửi email qua Gmail SMTP, cần tạo **App Password**. Đây là mật khẩu ứng dụng riêng dùng cho website hoặc phần mềm gửi email.
+
+## 2.8.3. Bật xác minh 2 bước cho tài khoản Gmail
+
+Trước khi tạo App Password, tài khoản Gmail cần bật xác minh 2 bước.
+
+Các bước thực hiện:
+
+1. Đăng nhập tài khoản Google.
+2. Vào trang quản lý tài khoản Google.
+3. Chọn mục **Security** hoặc **Bảo mật**.
+4. Chọn **2-Step Verification** hoặc **Xác minh 2 bước**.
+5. Làm theo hướng dẫn để bật xác minh 2 bước.
+
+Nếu chưa bật xác minh 2 bước, tài khoản thường sẽ không tạo được App Password.
+
+## 2.8.4. Tạo Gmail App Password
+
+Sau khi bật xác minh 2 bước:
+
+1. Vào tài khoản Google.
+2. Chọn **Security** hoặc **Bảo mật**.
+3. Tìm mục **App passwords** hoặc **Mật khẩu ứng dụng**.
+4. Tạo mật khẩu ứng dụng mới.
+5. Đặt tên dễ nhớ, ví dụ: VanAnhPerfume SMTP
+```
+Google sẽ sinh ra một mã gồm 16 ký tự.
+
+Ví dụ dạng hiển thị: abcd efgh ijkl mnop
+
+Khi điền vào file cấu hình, có thể nhập liền không có dấu cách: abcdefghijklmnop
+
+Lưu ý: App Password thường chỉ hiển thị một lần. Nếu quên mã này, cần xóa mã cũ và tạo mã mới.
+
+## 2.8.5. Điền thông tin vào appsettings.Development.json
+Người chạy project cần copy file:
+
+VanAnhPerfume/VanAnhPerfume/appsettings.example.json
+
+thành:
+
+VanAnhPerfume/VanAnhPerfume/appsettings.Development.json
+
+Sau đó sửa phần `Smtp` trong `appsettings.Development.json`.
+
+Ví dụ:
+
+```json
+"Smtp": {
+  "Host": "smtp.gmail.com",
+  "Port": "587",
+  "Username": "example@gmail.com",
+  "Password": "abcdefghijklmnop",
+  "From": "example@gmail.com"
+}
+```
+
+Trong đó:
+
+- `Username`: là Gmail dùng để gửi email.
+- `Password`: là Gmail App Password vừa tạo.
+- `From`: thường giống với `Username`.
+
+## 2.8.6. Lỗi thường gặp khi gửi email Gmail SMTP
+
+### Lỗi đăng nhập SMTP thất bại
+
+Nguyên nhân thường gặp:
+
+- Chưa bật xác minh 2 bước cho tài khoản Gmail.
+- Chưa tạo App Password.
+- Nhập nhầm mật khẩu Gmail thường thay vì App Password.
+- Nhập sai địa chỉ Gmail trong `Username`.
+- App Password bị thu hồi hoặc đã đổi mật khẩu Google.
+
+Cách xử lý:
+
+- Kiểm tra lại tài khoản Gmail.
+- Tạo App Password mới.
+- Cập nhật lại `Password` trong `appsettings.Development.json`.
+
+### Không thấy mục App Password
+
+Có thể do:
+
+- Tài khoản chưa bật xác minh 2 bước.
+- Tài khoản thuộc trường học hoặc công ty bị quản trị viên chặn.
+- Tài khoản đang bật chế độ bảo vệ nâng cao.
+- Tài khoản không đủ điều kiện tạo App Password.
+
+### Đổi mật khẩu Google xong website không gửi được email
+
+Khi đổi mật khẩu Google, App Password có thể bị thu hồi. Khi đó cần tạo App Password mới và cập nhật lại trong `appsettings.Development.json`.
+
+# BƯỚC 3: MỞ VÀ BUILD PROJECT
+
+## 3.1. Vị trí project chính
+Đường dẫn tương đối:
+VanAnhPerfume/VanAnhPerfume
+
+File project:
+VanAnhPerfume/VanAnhPerfume/VanAnhPerfume.csproj
+
+
+## 3.2. Mở project bằng Visual Studio
+
+Có 2 cách mở project:
+
+### Cách 1: Mở file solution nếu có
+Nếu trong thư mục:
+ProjectCode\VanAnhPerfume
+có file `.sln`, hãy mở file đó bằng Visual Studio.
+
+### Cách 2: Mở file project nếu không có solution
+Nếu không có file `.sln`, đường dẫn tương đối:
+VanAnhPerfume/VanAnhPerfume/VanAnhPerfume.csproj
+
+## 3.3. Restore package
+
+Nếu Visual Studio báo thiếu package, mở Terminal trong Visual Studio hoặc mở CMD/PowerShell tại thư mục project chính: VanAnhPerfume\VanAnhPerfume
+Sau đó chạy: dotnet restore
+
+## 3.4. Build project
+Trong Visual Studio, chọn: Build > Build Solution
+Hoặc nhấn: Ctrl + Shift + B
+Nếu build thành công, Visual Studio sẽ báo không có lỗi hoặc hiện thông báo build succeeded.
+Có thể build bằng terminal: dotnet build
+
+---
+
+# BƯỚC 4: CHẠY WEBSITE
+
+## 4.1. Chạy bằng Visual Studio
+Có thể chạy bằng một trong hai cách:
+### Cách 1: Chạy kèm debug
+Nhấn: F5
+### Cách 2: Chạy không debug
+Nhấn: Ctrl + F5
+
+Sau khi chạy thành công, trình duyệt sẽ tự mở website.
+
+## 4.2. Chạy bằng terminal
+Mở CMD, PowerShell hoặc Terminal tại thư mục project chính: ..\VanAnhPerfume\VanAnhPerfume
+Sau đó chạy: dotnet run
+
+Sau khi chạy thành công, terminal sẽ hiển thị địa chỉ website, ví dụ: https://localhost:3000
+hoặc: http://localhost:3001
+
+Mở địa chỉ đó bằng trình duyệt.
+
+## 4.3. Một số đường dẫn kiểm thử
+
+Sau khi website chạy thành công, có thể kiểm tra các đường dẫn sau:
+/                         Trang chủ
+/Account/Login            Đăng nhập
+/Account/Register         Đăng ký
+/Product                  Danh sách sản phẩm
+/Cart                     Giỏ hàng
+/Checkout                 Thanh toán
+/Admin                    Trang quản trị
+```
+Tùy theo source code, đường dẫn thực tế có thể thay đổi.
+
+---
+
+# BƯỚC 5: ĐĂNG NHẬP KIỂM THỬ
+
+Tài khoản demo được ghi trong file: Documents/TaiKhoanDemo.txt
+
+Nếu đăng nhập không thành công, cần kiểm tra:
+1. Database đã được import chưa.
+2. Bảng `Users` đã có tài khoản demo chưa.
+3. Mật khẩu trong `TaiKhoanDemo.txt` có khớp với database không.
+4. Tài khoản có bị khóa không.
+5. Tài khoản Admin đã được gán đúng quyền chưa.
+6. Bảng `Roles` và trường phân quyền người dùng có đúng không.
+
+Có thể kiểm tra trong SQL Server Management Studio:
+SELECT * FROM Users;
+SELECT * FROM Roles;
+```
+
+---
+
+# BƯỚC 6: LỖI THƯỜNG GẶP VÀ CÁCH XỬ LÝ
+
+## 6.1. Lỗi không kết nối được database
+
+Dấu hiệu: Cannot open database requested by the login
+
+hoặc: A network-related or instance-specific error occurred
+
+Cách xử lý:
+- Kiểm tra SQL Server đã chạy chưa.
+- Kiểm tra database `VanAnhPerfume` đã được tạo chưa.
+- Kiểm tra đã chạy file `Database/VANANHPERFUME_DBFN.sql` chưa.
+- Kiểm tra connection string trong `appsettings.json` hoặc `appsettings.Development.json`.
+- Kiểm tra Server name đang dùng là `localhost`, `.`, hoặc `.\SQLEXPRESS`.
+
+---
+
+## 6.2. Lỗi thiếu bảng trong database
+
+Dấu hiệu:
+Invalid object name 'Products'
+hoặc tên bảng khác.
+
+Cách xử lý:
+- Mở SQL Server Management Studio.
+- Chọn đúng database `VanAnhPerfume`.
+- Chạy lại file: Database/VANANHPERFUME_DBFN.SQL
+- Refresh thư mục Tables.
+
+---
+
+## 6.3. Lỗi connection string chưa được khởi tạo
+Dấu hiệu: The ConnectionString property has not been initialized
+Cách xử lý:
+- Kiểm tra trong file cấu hình có phần:
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "..."
+  }
+}
+- Kiểm tra tên `DefaultConnection` có khớp với tên đang gọi trong `Program.cs` không.
+
+---
+
+## 6.4. Lỗi build failed
+Cách xử lý:
+Chạy:
+dotnet restore
+dotnet build
+
+Nếu vẫn lỗi, kiểm tra:
+
+- Phiên bản .NET SDK.
+- Các package NuGet.
+- Lỗi cụ thể trong Visual Studio.
+
+---
+
+## 6.5. Lỗi không hiển thị ảnh sản phẩm
+Cách xử lý:
+Kiểm tra thư mục:
+VanAnhPerfume/VanAnhPerfume/wwwroot
+Kiểm tra thêm:
+- Ảnh sản phẩm có tồn tại không.
+- Đường dẫn ảnh trong database có đúng không.
+- File ảnh demo có được đưa kèm source không.
+
+---
+
+## 6.6. Lỗi không đăng nhập được Admin
+Cách xử lý:
+Kiểm tra bảng:
+SELECT * FROM Users;
+SELECT * FROM Roles;
+```
+Cần đảm bảo:
+- Tài khoản Admin tồn tại.
+- Mật khẩu khớp với tài khoản demo.
+- Tài khoản chưa bị khóa.
+- Quyền Admin được gán đúng.
+
+---
+
+## 6.7. Lỗi không gửi được email SMTP
+
+Dấu hiệu thường gặp:
+
+- Website báo lỗi khi gửi email.
+- Email xác nhận hoặc email thông báo không được gửi đi.
+- Log hiển thị lỗi xác thực SMTP.
+- Gmail từ chối đăng nhập.
+
+Cách xử lý:
+
+1. Kiểm tra trong `appsettings.Development.json` đã có phần cấu hình `Smtp` chưa:
+
+"Smtp": {
+  "Host": "smtp.gmail.com",
+  "Port": "587",
+  "Username": "example@gmail.com",
+  "Password": "abcdefghijklmnop",
+  "From": "example@gmail.com"
+}
+
+2. Kiểm tra `Username` có phải Gmail đầy đủ không.
+
+Ví dụ đúng: example@gmail.com
+
+Ví dụ sai: example
+
+3. Kiểm tra `Password` có phải Gmail App Password không.
+
+Không dùng mật khẩu đăng nhập Gmail thông thường.
+
+4. Kiểm tra tài khoản Gmail đã bật xác minh 2 bước chưa.
+
+5. Nếu App Password cũ không dùng được, hãy xóa App Password cũ và tạo App Password mới.
+
+6. Kiểm tra mạng internet và thử gửi lại email.
+
+---
+
+## 7. Ghi chú cuối cùng
+Khi người khác tải source code từ GitHub về, cần thực hiện theo thứ tự:
+1. Import database từ file Database/VANANHPERFUME_DBFN.sql
+2. Cấu hình connection string trong appsettings.Development.json hoặc appsettings.json
+3. Restore package bằng dotnet restore
+4. Cấu hình SMTP Gmail nếu cần dùng chức năng gửi email
+5. Restore package bằng dotnet restore
+6. Build project
+7. Chạy project
+8. Đăng nhập bằng tài khoản demo
+```
+
+KẾT THÚC HƯỚNG DẪN

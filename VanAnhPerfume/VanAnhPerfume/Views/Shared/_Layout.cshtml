@@ -1,0 +1,274 @@
+﻿@inject VanAnhPerfume.Data.VanAnhPerfumeContext Db
+@inject Microsoft.Extensions.Caching.Memory.IMemoryCache MemoryCache
+@{
+    List<VanAnhPerfume.Models.Entities.Brand>? brands = null;
+    if (!MemoryCache.TryGetValue("layout_active_brands", out object? cachedBrands))
+    {
+        brands = Db.Brands.Where(x => x.IsActive).OrderBy(x => x.SortOrder).ThenBy(x => x.Name).ToList();
+        var cacheEntry = MemoryCache.CreateEntry("layout_active_brands");
+        cacheEntry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5);
+        cacheEntry.Value = brands;
+        cacheEntry.Dispose();
+    }
+    else { brands = cachedBrands as List<VanAnhPerfume.Models.Entities.Brand>; }
+    brands ??= [];
+    var categories = Db.Categories.Where(x => x.IsActive && x.ParentId == null).OrderBy(x => x.SortOrder).ThenBy(x => x.Name).Take(9).ToList();
+    var categoryChildren = Db.Categories.Where(x => x.IsActive && x.ParentId != null).OrderBy(x => x.SortOrder).ThenBy(x => x.Name).ToList();
+    var genders = Db.Products.Where(x => x.Status == true && x.ProductStatus == "Active" && x.Gender != null).Select(x => x.Gender!).Distinct().OrderBy(x => x).ToList();
+    var footerPosts = Db.News.Where(x => x.Status == true && (x.NewsStatus == null || x.NewsStatus == "Published"))
+        .OrderByDescending(x => x.CreatedAt)
+        .Take(5)
+        .ToList();
+    var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
+    var currentAction = ViewContext.RouteData.Values["action"]?.ToString();
+    var isHomePage = string.Equals(currentController, "Home", StringComparison.OrdinalIgnoreCase)
+                     && string.Equals(currentAction, "Index", StringComparison.OrdinalIgnoreCase);
+}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Vân Anh Perfume</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/main.css" asp-append-version="true" />
+    @await RenderSectionAsync("MetaTags", required: false)
+</head>
+<body>
+    <div class="announcement-bar">
+        <i class="bi bi-stars me-1"></i> FREESHIP ĐƠN TỪ 500K
+        <span class="mx-2">•</span>
+        <i class="bi bi-patch-check me-1"></i> HÀNG CHÍNH HÃNG 100%
+        <span class="mx-2">•</span>
+        <i class="bi bi-arrow-repeat me-1"></i> ĐỔI TRẢ 7 NGÀY
+    </div>
+    <header class="page-header site-header">
+        <div class="container">
+            <div class="top-header row align-items-center py-2">
+                <div class="col-2 d-block d-md-none pe-0">
+                    <button class="menu-toggler menu-toggler-mobile btn btn-link text-dark p-0" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileNav">
+                        <i class="bi bi-list fs-4"></i>
+                    </button>
+                </div>
+                <div class="col-md-3 col-6 col-logo">
+                    <div class="logo">
+                        <a class="logo-link" href="/" rel="home" title="Vân Anh Perfume">
+                            <!-- <img class="img-responsive" src="https://tprofumo.com/wp-content/uploads/2023/02/Logo-den-1.svg" alt="Vân Anh Perfume" style="max-height:42px;"> -->
+                            <strong class="logo-text">Vân Anh Perfume</strong>
+                        </a>
+                    </div>
+                </div>
+                <div class="col-md-6 col-6 d-none d-md-block col-search">
+                    <form class="search-form form-inline position-relative" method="get" action="/Product">
+                        <div class="form-group w-100 d-flex">
+                            <input type="text" class="form-control rounded-0" name="q" id="headerSearchInput" placeholder="Tìm kiếm sản phẩm..." autocomplete="off">
+                            <button type="submit" class="btn btn-search btn-dark rounded-0 px-3">
+                                <i class="bi bi-search"></i>
+                            </button>
+                        </div>
+                        <div class="card position-absolute mt-1 w-100 d-none" id="searchSuggestBox" style="z-index:1200;"></div>
+                    </form>
+                </div>
+                <div class="col-md-3 col-4 hd-right">
+                    <ul class="nav nav-action align-items-center justify-content-end">
+                        <li class="nav-item login">
+                            <a class="nav-link d-flex align-items-center gap-1" href="@(User.Identity?.IsAuthenticated==true ? "/Account/Profile" : "/Account/Login")">
+                                <span class="icon"><i class="bi bi-person-circle fs-5"></i></span>
+                                <span class="text d-none d-md-inline">@(User.Identity?.IsAuthenticated==true ? "Tài khoản" : "Đăng nhập")</span>
+                            </a>
+                        </li>
+                        <li class="nav-item mini-cart">
+                            <a class="nav-link position-relative" asp-controller="Cart" asp-action="Index" title="Giỏ hàng">
+                                <span class="icon"><i class="bi bi-bag fs-5"></i></span>
+                                <span class="cart-number badge-dot" id="cartBadge">0</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </header>
+    <nav class="navbar navbar-expand-md primary-nav" id="primary-nav">
+        <div class="container">
+            <div class="row align-items-center full-menu w-100">
+                <div class="col-md-3">
+                    <div class="product-cat-menu @(isHomePage ? "is-home" : "")">
+                        <div class="product-cat-header">
+                            <button class="menu-toggler"><span class="icon-bar"></span></button>
+                            <span class="text">Danh mục sản phẩm</span>
+                            <span class="icon-arrow"><i class="bi bi-chevron-down"></i></span>
+                        </div>
+                        <div class="product-cat-content">
+                            <ul class="dm-menu list-unstyled m-0">
+                                <li class="menu-item menu-item-has-children">
+                                    <a href="/Product">Thương Hiệu</a>
+                                    <ul class="sub-menu list-unstyled" style="columns:4;max-width:680px;">
+                                        @foreach (var b in brands.Take(40))
+                                        {
+                                            <li><a href="/Home/Brand/@(b.Slug ?? b.Name.ToLower().Replace(" ","-"))">@b.Name</a></li>
+                                        }
+                                    </ul>
+                                </li>
+                                @foreach (var c in categories)
+                                {
+                                    var children = categoryChildren.Where(x => x.ParentId == c.CategoryId).ToList();
+                                    <li class="menu-item @(children.Count>0?"menu-item-has-children":"")">
+                                        <a href="/Product?category=@(c.Slug ?? c.Name.ToLower().Replace(" ","-"))">@c.Name</a>
+                                        @if (children.Count > 0)
+                                        {
+                                            <ul class="sub-menu list-unstyled">
+                                                @foreach (var child in children)
+                                                {
+                                                    <li><a href="/Product?category=@(child.Slug ?? child.Name.ToLower().Replace(" ","-"))">@child.Name</a></li>
+                                                }
+                                            </ul>
+                                        }
+                                    </li>
+                                }
+@*                                 @foreach (var g in genders)
+                                {
+                                    <li class="menu-item"><a href="/Product?gender=@g">Nước hoa @g.ToLower()</a></li>
+                                } *@
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-9 d-none d-md-block">
+                    <ul class="main-menu d-flex align-items-center gap-4 list-unstyled m-0">
+                        <li><a href="/Home/Policy">Về Vân Anh Perfume</a></li>
+                        <li><a href="/Home/Blog">Tạp chí nước hoa</a></li>
+                        <li><a href="/Home/Policy">Cam kết</a></li>
+                        @foreach (var g in genders.Take(3))
+                        {
+                            <li><a href="/Product?gender=@g">Nước hoa @g.ToLower()</a></li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="search-overlay" id="searchOverlay"></div>
+
+    <main>@RenderBody()</main>
+
+    <footer id="colophon" class="site-footer" role="contentinfo">
+        <div class="footer-top">
+            <div class="site-container">
+                <div class="row g-4">
+                    <div class="footer-sidebar col-md-3 col-6">
+                        <div class="widget-top"><span class="widget-title">Vân Anh Perfume</span></div>
+                        <a class="d-block py-1" href="/Home/Policy">Giới thiệu</a>
+                        <a class="d-block py-1" href="/Home/Contact">Liên hệ</a>
+                    </div>
+                    <div class="footer-sidebar col-md-3 col-6">
+                        <div class="widget-top"><span class="widget-title">Chính sách</span></div>
+                        <a class="d-block py-1" href="/Home/Policy">Chính sách bảo mật thông tin</a>
+                        <a class="d-block py-1" href="/Home/Policy">Cam kết sản phẩm chính hãng</a>
+                        <a class="d-block py-1" href="/Home/Policy">Hoàn tiền và đổi trả</a>
+                        <a class="d-block py-1" href="/Home/Policy">Hướng dẫn thanh toán</a>
+                        <a class="d-block py-1" href="/Home/Policy">Chính sách mua hàng</a>
+                        <a class="d-block py-1" href="/Home/Policy">Chính sách bảo hành</a>
+                        <a class="d-block py-1" href="/Home/Policy">Chính sách vận chuyển</a>
+                    </div>
+                    <div class="footer-sidebar col-md-3 col-6">
+                        <div class="widget-top"><span class="widget-title">Thông tin liên hệ</span></div>
+                        <p class="mb-1">Địa chỉ: Đại học Nguyễn Trãi, Lê Trọng Tấn/28A P. Hà Cầu, Hà Đông, Hà Nội, Việt Nam</p>
+                        <p class="mb-1">Email: daihocnguyentrai@gmail.com</p>
+                        <p class="mb-2">Gọi đặt mua: 0981924302 (9:00-21:00)</p>
+                        <p class="small text-muted text-uppercase mb-1 footer-map-label">Đại học Nguyễn Trãi</p>
+                        <div class="footer-map-embed">
+                            <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3725.736552598226!2d105.76154267525118!3d20.963092290030804!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x313454cabc683f57%3A0xdb02223a0620af21!2zxJDhuqFpIGjhu41jIE5ndXnhu4VuIFRyw6Np!5e0!3m2!1svi!2s!4v1777516193059!5m2!1svi!2s"
+                                    title="Đại học Nguyễn Trãi — Google Maps"
+                                    allowfullscreen=""
+                                    loading="lazy"
+                                    referrerpolicy="no-referrer-when-downgrade"></iframe>
+                        </div>
+                    </div>
+                    <div class="footer-sidebar col-md-3 col-6">
+                        <div class="widget-top"><span class="widget-title">Bài viết mới</span></div>
+                        <ul class="footer-post-list">
+                            @foreach (var post in footerPosts)
+                            {
+                                <li><a class="footer-post-link" href="/Home/BlogDetail/@post.NewsId" title="@post.Title">@post.Title</a></li>
+                            }
+                        </ul>
+                        <form id="newsletterForm" class="mt-3">
+                            <div class="d-flex gap-2">
+                                <input id="newsletterEmail" class="form-control rounded-0" placeholder="Email của bạn" />
+                                <button class="btn btn-primary-lux py-2 px-3" type="submit">Đăng ký</button>
+                            </div>
+                            <small id="newsletterMessage" class="d-block mt-2"></small>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <div class="site-container">
+                <div class="site-info">
+                    <hr />
+                    <p class="text-center mb-1">Đại học Nguyễn Trãi</p>
+                    <p class="text-center mb-1">Mã số doanh nghiệp: 010997685. Giấy chứng nhận đăng ký doanh nghiệp do Sở Kế hoạch và Đầu tư thành phố Hà Nội cấp ngày 25/04/2026</p>
+                    <hr />
+                    <p class="text-center mb-0">Bản quyền thuộc về Đại học Nguyễn Trãi</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <div class="offcanvas offcanvas-end" tabindex="-1" id="miniCartCanvas">
+        <div class="offcanvas-header">
+            <h5 class="offcanvas-title">Giỏ hàng</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+        </div>
+        <div class="offcanvas-body p-0" id="miniCartBody"></div>
+    </div>
+    <div class="offcanvas offcanvas-start" tabindex="-1" id="mobileNav">
+        <div class="offcanvas-header">
+            <h5 class="offcanvas-title">MENU</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+        </div>
+        <div class="offcanvas-body">
+            <a class="d-block py-2 text-decoration-none text-dark" href="/Product?gender=Nam">NAM</a>
+            <a class="d-block py-2 text-decoration-none text-dark" href="/Product?gender=Nữ">NỮ</a>
+            <a class="d-block py-2 text-decoration-none text-dark" href="/Product?gender=Unisex">UNISEX</a>
+            <a class="d-block py-2 text-decoration-none text-dark" href="/Home/Blog">BLOG</a>
+            <a class="d-block py-2 text-decoration-none text-dark" href="/Home/Contact">LIÊN HỆ</a>
+            <hr />
+            @foreach (var b in brands)
+            {
+                <a class="d-block py-1 text-decoration-none text-muted" href="/Home/Brand/@(b.Slug ?? b.Name.ToLower().Replace(" ","-"))">@b.Name</a>
+            }
+        </div>
+    </div>
+
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+    <script src="~/js/main.js" asp-append-version="true"></script>
+    <script>
+        document.getElementById('newsletterForm')?.addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const emailInput = document.getElementById('newsletterEmail');
+            const msg = document.getElementById('newsletterMessage');
+            const email = emailInput.value?.trim();
+            if (!email) return;
+            const res = await fetch('/Home/Subscribe', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email })
+            });
+            const data = await res.json();
+            msg.innerText = data.message || '';
+            msg.className = data.success ? 'd-block mt-2 text-success' : 'd-block mt-2 text-danger';
+            if (data.success) emailInput.value = '';
+        });
+    </script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

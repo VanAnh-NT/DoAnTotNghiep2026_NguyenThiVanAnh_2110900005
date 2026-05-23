@@ -1,0 +1,15 @@
+@{
+    var statusCode = ViewBag.StatusCode as int? ?? 500;
+    ViewData["Title"] = $"{statusCode} - Lỗi";
+}
+<section class="section-block">
+    <div class="site-container text-center">
+        <div class="label-uppercase text-muted mb-2">VÂN ANH PERFUME</div>
+        <h1>@statusCode — Trang không tìm thấy</h1>
+        <p class="text-muted mb-4">Nội dung bạn tìm kiếm không tồn tại hoặc đã được di chuyển.</p>
+        <div class="d-flex justify-content-center gap-2">
+            <a href="/" class="btn btn-primary-lux">Về trang chủ</a>
+            <a href="/Product" class="btn btn-secondary-lux">Xem sản phẩm</a>
+        </div>
+    </div>
+</section>

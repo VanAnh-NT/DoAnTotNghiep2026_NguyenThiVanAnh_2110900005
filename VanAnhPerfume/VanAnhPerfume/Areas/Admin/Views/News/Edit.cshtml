@@ -1,0 +1,76 @@
+@model VanAnhPerfume.Models.Entities.News
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Sửa bài viết";
+}
+<h4>Sửa bài viết #@Model.NewsId</h4>
+<form method="post" enctype="multipart/form-data" class="row g-3">
+    <input type="hidden" asp-for="NewsId" />
+    <div class="col-lg-8">
+        <label>Tiêu đề</label>
+        <input asp-for="Title" class="form-control form-control-lg mb-2" id="Title" required />
+
+        <label>Slug</label>
+        <input asp-for="Slug" class="form-control mb-2" id="Slug" />
+        <label>Nội dung</label>
+        <textarea asp-for="Content" id="newsEditor" class="form-control" rows="20"></textarea>
+    </div>
+    <div class="col-lg-4">
+        <div class="card p-3 sticky-top" style="top:90px;">
+            <label>Trạng thái</label><select asp-for="NewsStatus" class="form-select mb-2"><option value="Draft">Draft</option><option value="Published">Published</option></select>
+            <label>Ngày đăng</label><input asp-for="PublishAt" type="datetime-local" class="form-control mb-2" />
+            <label>Tác giả</label><input asp-for="AuthorName" class="form-control mb-2" />
+            <label>Tag/Chuyên mục</label><input asp-for="CategoryTag" class="form-control mb-2" />
+            <label>Thumbnail 16:9</label><input type="file" name="thumbnailFile" class="form-control mb-2" accept="image/*" />
+            <input asp-for="ThumbnailUrl" class="form-control mb-2" placeholder="Hoặc dán URL thumbnail" />
+            @if (!string.IsNullOrWhiteSpace(Model.ThumbnailUrl))
+            {
+                <img src="@Model.ThumbnailUrl" class="img-fluid mb-2" style="aspect-ratio:16/9;object-fit:cover;" />
+            }
+            <div class="form-check mb-2"><input asp-for="IsFeatured" class="form-check-input" /><label asp-for="IsFeatured" class="form-check-label">Nổi bật</label></div>
+            <label>Tóm tắt</label><textarea asp-for="Excerpt" class="form-control mb-2" rows="3"></textarea>
+            <small class="text-muted d-block mb-2">Nếu để trống, hệ thống sẽ tự tạo tóm tắt ngắn từ nội dung bài viết.</small>
+            <details class="mb-2"><summary>SEO</summary><input asp-for="MetaTitle" class="form-control mt-2" placeholder="Meta title" /><textarea asp-for="MetaDescription" class="form-control mt-2" rows="2" placeholder="Meta description (tối đa 2000 ký tự)"></textarea></details>
+            <div class="d-flex gap-2">
+                <button name="submitAction" value="draft" class="btn btn-outline-dark">Lưu Draft</button>
+                <button name="submitAction" value="publish" class="btn btn-primary">Đăng bài</button>
+                <a href="/Home/BlogDetail/@Model.NewsId" target="_blank" class="btn btn-secondary">Preview</a>
+            </div>
+        </div>
+    </div>
+</form>
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/tinymce@6.8.3/tinymce.min.js" referrerpolicy="origin"></script>
+    <script>
+        if (window.tinymce) {
+        tinymce.init({
+        selector: '#newsEditor',
+        height: 600,
+        menubar: true,
+        plugins: 'advlist autolink lists link image charmap preview anchor searchreplace visualblocks code fullscreen insertdatetime media table help wordcount',
+        toolbar: 'undo redo | formatselect | bold italic underline | alignleft aligncenter alignright | bullist numlist blockquote | link image table code',
+        images_upload_url: '/Admin/News/UploadImage',
+        automatic_uploads: true
+        });
+        }
+
+        function slugify(value) {
+        return (value || '')
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/đ/g, 'd')
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+        }
+
+        const titleInput = document.getElementById('Title');
+        const slugInput = document.getElementById('Slug');
+
+        if (titleInput && slugInput) {
+        titleInput.addEventListener('input', function () {
+        slugInput.value = slugify(titleInput.value);
+        });
+        }
+    </script>
+}

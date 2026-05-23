@@ -1,0 +1,92 @@
+@model VanAnhPerfume.Models.Entities.Banner
+@{
+    Layout = "_AdminLayout";
+    var isEdit = Model.Id > 0;
+    var displayFromValue = Model.DisplayFrom.HasValue ? Model.DisplayFrom.Value.ToString("yyyy-MM-ddTHH:mm") : "";
+    var displayToValue = Model.DisplayTo.HasValue ? Model.DisplayTo.Value.ToString("yyyy-MM-ddTHH:mm") : "";
+    var textColorValue = string.IsNullOrWhiteSpace(Model.TextColor) ? "#FFFFFF" : Model.TextColor;
+}
+<h4>@(isEdit ? "Sửa banner" : "Thêm banner")</h4>
+<form asp-action="Save" method="post" enctype="multipart/form-data" class="card p-3">
+    <input type="hidden" asp-for="Id" />
+    <div class="row g-2">
+        <div class="col-md-3">
+            <label class="form-label">Tiêu đề</label>
+            <input asp-for="Title" class="form-control" required />
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">Phụ đề</label>
+            <input asp-for="SubTitle" class="form-control" />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Mô tả</label>
+            <input asp-for="Description" class="form-control" />
+        </div>
+
+        <div class="col-md-2">
+            <label class="form-label">File ảnh</label>
+            <input name="imageFile" type="file" class="form-control" accept="image/*" />
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">URL ảnh</label>
+            <input asp-for="ImageUrl" class="form-control" placeholder="https://..." />
+        </div>
+
+        <div class="col-md-2">
+            <label class="form-label">File ảnh mobile</label>
+            <input name="mobileImageFile" type="file" class="form-control" accept="image/*" />
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">URL ảnh mobile</label>
+            <input asp-for="MobileImageUrl" class="form-control" placeholder="https://..." />
+        </div>
+
+        <div class="col-md-2">
+            <label class="form-label">Link URL</label>
+            <input asp-for="LinkUrl" class="form-control" />
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">Vị trí</label>
+            <select asp-for="Position" class="form-select">
+                <option value="hero">Hero Slider</option>
+                <option value="mid-page">Banner giữa trang</option>
+                <option value="brand">Banner brand</option>
+            </select>
+        </div>
+
+        <div class="col-md-2">
+            <label class="form-label">Text nút CTA</label>
+            <input asp-for="ButtonText" class="form-control" />
+        </div>
+        <div class="col-md-1 d-flex align-items-end">
+            <label class="form-label me-2">Màu chữ</label>
+            <input asp-for="TextColor" type="color" class="form-control form-control-color" value="@textColorValue" />
+        </div>
+        <div class="col-md-1">
+            <label class="form-label">Sort</label>
+            <input asp-for="SortOrder" class="form-control" type="number" />
+        </div>
+
+        <div class="col-md-2">
+            <label class="form-label">Display from</label>
+            <input name="DisplayFrom" type="datetime-local" class="form-control" value="@displayFromValue" />
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">Display to</label>
+            <input name="DisplayTo" type="datetime-local" class="form-control" value="@displayToValue" />
+        </div>
+
+        <div class="col-md-1 d-flex align-items-end">
+            <div class="form-check">
+                <input asp-for="IsActive" class="form-check-input" type="checkbox" />
+                <label class="form-check-label">Active</label>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex gap-2 mt-3">
+        <button class="btn btn-primary" type="submit">Lưu</button>
+        <a asp-action="Index" class="btn btn-secondary">Quay lại</a>
+    </div>
+</form>
+

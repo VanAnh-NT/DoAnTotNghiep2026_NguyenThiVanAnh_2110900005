@@ -1,0 +1,29 @@
+@model VanAnhPerfume.Models.ViewModels.MiniCartVM
+<div class="p-3">
+    <h5 class="mb-3">Giỏ hàng</h5>
+    @if (!Model.Items.Any())
+    {
+        <p class="text-muted">Chưa có sản phẩm trong giỏ.</p>
+    }
+    else
+    {
+        @foreach (var item in Model.Items)
+        {
+            <div class="d-flex gap-2 border-bottom py-2">
+                <img src="@item.ImageUrl" width="48" height="48" style="object-fit:cover" />
+                <div class="flex-grow-1">
+                    <div class="small fw-bold">@item.ProductName</div>
+                    <div class="small text-muted">@item.Size - x@item.Quantity</div>
+                </div>
+                <div class="small">@item.Total.ToString("N0") ₫</div>
+            </div>
+        }
+        <div class="d-flex justify-content-between fw-bold mt-3">
+            <span>Tổng</span><span>@Model.TotalAmount.ToString("N0") ₫</span>
+        </div>
+        <div class="d-grid gap-2 mt-3">
+            <a class="btn btn-outline-dark btn-sm" href="/Cart/Index">Xem giỏ hàng</a>
+            <a class="btn btn-dark btn-sm" href="/Cart/Checkout">Thanh toán ngay</a>
+        </div>
+    }
+</div>

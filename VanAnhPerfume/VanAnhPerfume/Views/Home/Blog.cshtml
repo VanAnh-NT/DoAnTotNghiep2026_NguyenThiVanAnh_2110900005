@@ -1,0 +1,156 @@
+@using System.Net
+@using System.Text.RegularExpressions
+@model IEnumerable<VanAnhPerfume.Models.Entities.News>
+
+@{
+    ViewData["Title"] = "Tạp chí nước hoa";
+    var tags = ViewBag.Tags as List<string> ?? [];
+    var selectedTag = ViewBag.Tag as string;
+    var currentPage = ViewBag.Page as int? ?? 1;
+    var totalPages = ViewBag.TotalPages as int? ?? 1;
+}
+
+@functions {
+    private static string DecodeHtmlText(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return string.Empty;
+        }
+
+        var text = value;
+
+        for (var i = 0; i < 3; i++)
+        {
+            var decoded = WebUtility.HtmlDecode(text);
+
+            if (decoded == text)
+            {
+                break;
+            }
+
+            text = decoded;
+        }
+
+        return text;
+    }
+
+    private static string BuildNewsExcerpt(string? excerpt, string? content, int length = 130)
+    {
+        var rawText = !string.IsNullOrWhiteSpace(excerpt)
+            ? excerpt
+            : Regex.Replace(content ?? string.Empty, "<.*?>", " ");
+
+        rawText = DecodeHtmlText(rawText);
+        rawText = Regex.Replace(rawText, "<.*?>", " ");
+        rawText = Regex.Replace(rawText, @"\s+", " ").Trim();
+
+        return rawText.Length > length ? rawText[..length] + "..." : rawText;
+    }
+}
+
+<section class="section-block pt-4">
+    <div class="site-container">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h1 class="mb-0">Tạp chí nước hoa</h1>
+
+            <div class="d-flex gap-2 flex-wrap">
+                <a asp-controller="Home"
+                       asp-action="Blog"
+                       class="btn btn-sm @(string.IsNullOrWhiteSpace(selectedTag) ? "btn-dark" : "btn-outline-dark")">
+                    Tất cả
+                </a>
+
+                @foreach (var t in tags)
+                {
+                    <a asp-controller="Home"
+                           asp-action="Blog"
+                           asp-route-tag="@t"
+                           class="btn btn-sm @(selectedTag == t ? "btn-dark" : "btn-outline-dark")">
+                        @t
+                    </a>
+                }
+            </div>
+        </div>
+
+        <div class="row g-4">
+            @foreach (var post in Model)
+            {
+                var title = DecodeHtmlText(post.Title);
+                var excerpt = BuildNewsExcerpt(post.Excerpt, post.Content, 130);
+                var imageUrl = post.ThumbnailUrl ?? post.Image ?? "/images/default-perfume.jpg";
+                var publishDate = post.PublishAt ?? post.CreatedAt;
+
+                <div class="col-12 col-md-4">
+                    <article class="blog-card h-100">
+                        <a asp-controller="Home"
+                               asp-action="BlogDetail"
+                               asp-route-id="@post.NewsId"
+                               class="blog-card-image-link"
+                               aria-label="@title">
+                            <img src="@imageUrl"
+                                 alt="@title"
+                                 class="blog-card-image" />
+                        </a>
+
+                        <div class="blog-card-body">
+                            <div class="blog-card-meta">
+                                @if (post.IsFeatured == true)
+                                {
+                                    <span class="blog-card-featured">Nổi bật</span>
+                                }
+
+                                @if (!string.IsNullOrWhiteSpace(post.CategoryTag))
+                                {
+                                    <span class="blog-card-category">@DecodeHtmlText(post.CategoryTag)</span>
+                                }
+                            </div>
+
+                            <a asp-controller="Home"
+                                   asp-action="BlogDetail"
+                                   asp-route-id="@post.NewsId"
+                                   class="blog-card-title">
+                                @title
+                            </a>
+
+                            <p class="blog-card-date">
+                                @(publishDate.HasValue ? publishDate.Value.ToString("dd/MM/yyyy") : "")
+                            </p>
+
+                            <p class="blog-card-excerpt">
+                                @excerpt
+                            </p>
+
+                            <a asp-controller="Home"
+                                   asp-action="BlogDetail"
+                                   asp-route-id="@post.NewsId"
+                                   class="blog-card-readmore">
+                                Đọc tiếp →
+                            </a>
+                        </div>
+                    </article>
+                </div>
+            }
+        </div>
+
+        @if (totalPages > 1)
+        {
+            <nav class="mt-4">
+                <ul class="pagination">
+                    @for (var i = 1; i <= totalPages; i++)
+                    {
+                        <li class="page-item @(i == currentPage ? "active" : "")">
+                            <a asp-controller="Home"
+                                   asp-action="Blog"
+                                   asp-route-page="@i"
+                                   asp-route-tag="@selectedTag"
+                                   class="page-link">
+                                @i
+                            </a>
+                        </li>
+                    }
+                </ul>
+            </nav>
+        }
+    </div>
+</section>

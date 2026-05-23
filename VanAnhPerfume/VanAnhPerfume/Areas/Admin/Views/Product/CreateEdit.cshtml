@@ -1,0 +1,394 @@
+@model VanAnhPerfume.Models.ViewModels.AdminProductWizardVM
+@{
+    Layout = "_AdminLayout";
+    var brands = ViewBag.Brands as List<VanAnhPerfume.Models.Entities.Brand> ?? [];
+    var categories = ViewBag.Categories as List<VanAnhPerfume.Models.Entities.Category> ?? [];
+    var isEdit = Model.ProductId.HasValue;
+}
+<h4>@(isEdit ? $"Cập nhật sản phẩm #{Model.ProductId}" : "Tạo sản phẩm")</h4>
+<div asp-validation-summary="All" class="text-danger"></div>
+<form method="post" enctype="multipart/form-data" id="productWizardForm">
+    <input type="hidden" asp-for="ProductId" />
+    <input type="hidden" asp-for="AttributesJson" id="AttributesJson" />
+    <input type="hidden" asp-for="VariantsJson" id="VariantsJson" />
+    <input type="hidden" asp-for="ExistingImagesJson" id="ExistingImagesJson" />
+    <input type="hidden" asp-for="DetailSpecsJson" id="DetailSpecsJson" />
+
+    <ul class="nav nav-tabs mb-3" id="wizardTabs">
+        <li class="nav-item"><button class="nav-link active" data-step="1" type="button">1. Cơ bản</button></li>
+        <li class="nav-item"><button class="nav-link" data-step="2" type="button">2. Thuộc tính</button></li>
+        <li class="nav-item"><button class="nav-link" data-step="3" type="button">3. Biến thể</button></li>
+        <li class="nav-item"><button class="nav-link" data-step="4" type="button">4. Hình ảnh</button></li>
+    </ul>
+
+    <div class="wizard-step" data-step="1">
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label>Tên sản phẩm *</label>
+                <input asp-for="Name" class="form-control" id="Name" />
+            </div>
+            <div class="col-md-6">
+                <label>Slug *</label>
+                <input asp-for="Slug" class="form-control" id="Slug" />
+            </div>
+            <div class="col-md-4">
+                <label>Danh mục</label>
+                <select asp-for="CategoryId" class="form-select">@foreach (var c in categories){
+                    <option value="@c.CategoryId">@c.Name</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-4">
+            <label>Thương hiệu</label>
+            <select asp-for="BrandId" class="form-select">@foreach (var b in brands){
+                <option value="@b.BrandId">@b.Name</option>
+            }
+        </select>
+    </div>
+    <div class="col-md-4">
+        <label>Nồng độ</label>
+        <select asp-for="Concentration" class="form-select">
+            <option>Parfum</option>
+            <option>EDP</option>
+            <option>EDT</option>
+            <option>EDC</option>
+            <option>Other</option>
+        </select>
+    </div>
+    <div class="col-md-4">
+        <label>Giới tính</label>
+        <div class="d-flex gap-3 mt-2">
+            <label><input type="radio" asp-for="Gender" value="Nam" /> Nam</label>
+            <label><input type="radio" asp-for="Gender" value="Nữ" /> Nữ</label>
+            <label><input type="radio" asp-for="Gender" value="Unisex" /> Unisex</label>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <label>Mô tả ngắn</label>
+        <textarea asp-for="ShortDescription" class="form-control" rows="3" maxlength="1000" spellcheck="true"></textarea>
+        <small class="text-muted">Tối đa <strong>1000</strong> ký tự (gồm khoảng trắng và xuống dòng).</small>
+    </div>
+    <div class="col-md-4 d-flex align-items-end gap-4">
+        <label><input type="checkbox" asp-for="IsFeatured" /> Nổi bật</label>
+        <label><input type="checkbox" asp-for="IsActive" /> Kích hoạt</label>
+    </div>
+    <div class="col-12">
+        <label>Mô tả đầy đủ</label>
+        <textarea asp-for="Description" class="form-control tinymce" rows="8"></textarea>
+        <small class="text-muted">Lưu dạng HTML (có thể dài). Cơ sở dữ liệu dùng <strong>nvarchar(max)</strong> — không có mức trần ký tự cố định trong quy tắc lưu; chỉ cần tránh dán nội dung cực lớn (vd. ảnh base64) để không vượt giới hạn gửi form của server.</small>
+    </div>
+    <div class="col-12 mt-3">
+        <label class="form-label mb-1">Bảng thông tin chi tiết</label>
+        <p class="small text-muted mb-2">Mỗi dòng gồm tên thông tin và giá trị (hiển thị dạng bảng trên trang sản phẩm).</p>
+        <button type="button" class="btn btn-outline-primary btn-sm mb-2" id="btnAddDetailSpec">+ Thêm dòng</button>
+        <div id="detailSpecsContainer"></div>
+    </div>
+</div>
+</div>
+
+<div class="wizard-step d-none" data-step="2">
+    <button class="btn btn-outline-primary mb-2" type="button" id="btnAddAttr">+ Thêm thuộc tính</button>
+    <div id="attributesContainer"></div>
+    <button class="btn btn-dark mt-3" type="button" id="btnGenerateVariants">Tạo biến thể</button>
+</div>
+
+<div class="wizard-step d-none" data-step="3">
+    <div class="d-flex gap-2 mb-2">
+        <input id="bulkPrice" type="number" class="form-control" placeholder="Giá đồng bộ" />
+        <button class="btn btn-outline-secondary" type="button" id="btnBulkPrice">Đồng bộ giá</button>
+    </div>
+    <table class="table table-lux" id="variantTable">
+        <thead><tr><th>Biến thể</th><th>SKU</th><th>Giá bán</th><th>Giá gốc</th><th>Tồn kho</th><th>Ngưỡng</th><th>Kích hoạt</th><th></th></tr></thead>
+        <tbody></tbody>
+    </table>
+    <button class="btn btn-outline-primary" type="button" id="btnAddVariant">+ Thêm biến thể thủ công</button>
+</div>
+
+<div class="wizard-step d-none" data-step="4">
+    <input class="form-control mb-3" type="file" name="uploadImages" id="uploadImages" multiple accept="image/*" />
+
+    <div class="d-flex gap-2 mb-3 align-items-end">
+        <div class="flex-grow-1">
+            <label class="form-label mb-1">Hoặc dán URL ảnh</label>
+            <input id="imageUrlInput" type="url" class="form-control" placeholder="https://..." />
+        </div>
+        <button type="button" class="btn btn-outline-primary" id="btnAddImageUrl">+ Thêm</button>
+    </div>
+
+    <div id="imageGrid" class="row g-2"></div>
+</div>
+
+<div class="mt-3 d-flex justify-content-between">
+    <a asp-action="Index" class="btn btn-light">Hủy</a>
+    <button class="btn btn-primary" id="btnSubmit" type="submit">Lưu sản phẩm</button>
+</div>
+</form>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tinymce@6.8.3/tinymce.min.js" referrerpolicy="origin"></script>
+    <script>
+        if (window.tinymce) {
+        tinymce.init({ selector: ".tinymce", height: 260 });
+        } else {
+        console.warn("TinyMCE failed to load, fallback to plain textarea.");
+        }
+        const attrs = JSON.parse(document.getElementById('AttributesJson').value || '[]');
+        const variants = JSON.parse(document.getElementById('VariantsJson').value || '[]');
+        let detailSpecs = [];
+        try {
+        detailSpecs = JSON.parse(document.getElementById('DetailSpecsJson').value || '[]') || [];
+        } catch (e) { detailSpecs = []; }
+        if (!Array.isArray(detailSpecs)) detailSpecs = [];
+        detailSpecs = detailSpecs.map(r => ({ label: (r && r.label) || '', value: (r && r.value) || '' }));
+        const uploadFileByClientKey = new Map();
+        const newClientKey = () => (window.crypto?.randomUUID ? window.crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`);
+        const existingImages = (JSON.parse(document.getElementById('ExistingImagesJson').value || '[]') || []).map(img => {
+        if (img.imageId != null) img.clientKey = String(img.imageId);
+        else img.clientKey = img.clientKey || newClientKey();
+        return img;
+        });
+        const tabs = document.querySelectorAll('#wizardTabs .nav-link');
+        const steps = document.querySelectorAll('.wizard-step');
+        const attrBox = document.getElementById('attributesContainer');
+        const variantBody = document.querySelector('#variantTable tbody');
+        const imageGrid = document.getElementById('imageGrid');
+        const detailSpecsBox = document.getElementById('detailSpecsContainer');
+
+        function renderDetailSpecs() {
+        if (!detailSpecsBox) return;
+        detailSpecsBox.innerHTML = '';
+        detailSpecs.forEach((row, i) => {
+        const div = document.createElement('div');
+        div.className = 'row g-2 mb-2 align-items-start';
+        const labelCol = document.createElement('div');
+        labelCol.className = 'col-md-5';
+        const valCol = document.createElement('div');
+        valCol.className = 'col-md-6';
+        const btnCol = document.createElement('div');
+        btnCol.className = 'col-md-1 d-flex align-items-start';
+        const inpL = document.createElement('input');
+        inpL.className = 'form-control spec-label';
+        inpL.value = row.label;
+        inpL.placeholder = 'Tên (vd. Xuất xứ)';
+        inpL.addEventListener('input', () => { row.label = inpL.value; syncHidden(); });
+        const inpV = document.createElement('input');
+        inpV.className = 'form-control spec-value';
+        inpV.value = row.value;
+        inpV.placeholder = 'Giá trị';
+        inpV.addEventListener('input', () => { row.value = inpV.value; syncHidden(); });
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'btn btn-sm btn-outline-danger';
+        btn.textContent = '×';
+        btn.setAttribute('aria-label', 'Xóa dòng');
+        btn.addEventListener('click', () => { detailSpecs.splice(i, 1); renderDetailSpecs(); syncHidden(); });
+        labelCol.appendChild(inpL);
+        valCol.appendChild(inpV);
+        btnCol.appendChild(btn);
+        div.appendChild(labelCol);
+        div.appendChild(valCol);
+        div.appendChild(btnCol);
+        detailSpecsBox.appendChild(div);
+        });
+        }
+
+        document.getElementById('btnAddDetailSpec')?.addEventListener('click', () => {
+        detailSpecs.push({ label: '', value: '' });
+        renderDetailSpecs();
+        syncHidden();
+        });
+
+        function slugify(v){return (v||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/đ/g,'d').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');}
+        document.getElementById('Name').addEventListener('input', e => { if (!document.getElementById('Slug').dataset.touched) document.getElementById('Slug').value = slugify(e.target.value);});
+        document.getElementById('Slug').addEventListener('input', e => e.target.dataset.touched='1');
+
+        tabs.forEach(t => t.addEventListener('click', ()=> { const s=t.dataset.step; tabs.forEach(x=>x.classList.remove('active')); t.classList.add('active'); steps.forEach(x=>x.classList.toggle('d-none', x.dataset.step!==s)); }));
+
+        function renderAttrs(){
+        attrBox.innerHTML='';
+        attrs.forEach((a,i)=>{
+        const div=document.createElement('div');
+        div.className='border p-2 mb-2';
+        div.innerHTML=`<div class="d-flex gap-2"><input class="form-control attr-name" value="${a.name||''}" placeholder="Tên thuộc tính"/><button class="btn btn-sm btn-outline-danger btn-del-attr" type="button">×</button></div><input class="form-control mt-2 attr-values" value="${(a.values||[]).join(',')}" placeholder="Giá trị, phân tách bởi dấu phẩy" />`;
+        div.querySelector('.btn-del-attr').onclick=()=>{attrs.splice(i,1);renderAttrs();syncHidden();};
+        div.querySelector('.attr-name').oninput=(e)=>{a.name=e.target.value;syncHidden();};
+        div.querySelector('.attr-values').oninput=(e)=>{a.values=e.target.value.split(',').map(x=>x.trim()).filter(Boolean);syncHidden();};
+        attrBox.appendChild(div);
+        });
+        }
+
+        function cartesian(arr){return arr.reduce((a,b)=>a.flatMap(x=>b.map(y=>x.concat([y]))), [[]]);}
+        function buildSku(values){return `${slugify(document.getElementById('Slug').value)}-${values.map(slugify).join('-')}`.toUpperCase();}
+
+        function renderVariants(){
+        variantBody.innerHTML='';
+        variants.forEach((v,i)=>{
+        const tr=document.createElement('tr');
+        tr.innerHTML=`<td>${v.variantLabel||''}</td><td><input class="form-control" value="${v.sku||''}" /></td><td><input class="form-control price-input" type="number" value="${v.price||0}" /></td><td><input class="form-control" type="number" value="${v.originalPrice||''}" /></td><td><input class="form-control" type="number" value="${v.quantityAvailable||0}" /></td><td><input class="form-control" type="number" value="${v.lowStockThreshold||5}" /></td><td><input type="checkbox" ${v.isActive?'checked':''} /></td><td><button class="btn btn-sm btn-outline-danger" type="button">Xóa</button></td>`;
+        tr.querySelector('button').onclick=()=>{if(confirm('Xóa biến thể?')){variants.splice(i,1);renderVariants();syncHidden();}};
+        const inputs=tr.querySelectorAll('input');
+        inputs[0].oninput=e=>{v.sku=e.target.value;syncHidden();};
+        inputs[1].oninput=e=>{v.price=Number(e.target.value||0);tr.classList.toggle('table-danger', v.price<=0);syncHidden();};
+        inputs[2].oninput=e=>{v.originalPrice=e.target.value?Number(e.target.value):null;syncHidden();};
+        inputs[3].oninput=e=>{v.quantityAvailable=Number(e.target.value||0);syncHidden();};
+        inputs[4].oninput=e=>{v.lowStockThreshold=Number(e.target.value||5);syncHidden();};
+        inputs[5].onchange=e=>{v.isActive=e.target.checked;syncHidden();};
+        variantBody.appendChild(tr);
+        });
+        }
+
+        function renderImages(){
+        imageGrid.innerHTML='';
+        existingImages.sort((a,b)=>(a.sortOrder||0)-(b.sortOrder||0));
+        existingImages.forEach((img,i)=>{
+        const col=document.createElement('div');
+        col.className='col-md-3';
+        col.dataset.imageId=img.imageId||'';
+        col.dataset.clientKey=img.clientKey;
+        col.innerHTML=`<div class="card"><img src="${img.imageUrl}" class="card-img-top" style="height:150px;object-fit:cover"/><div class="card-body p-2"><label><input type="radio" name="primaryImage" ${img.isPrimary?'checked':''}/> Ảnh chính</label><button type="button" class="btn btn-sm btn-outline-danger float-end">Xóa</button></div></div>`;
+        col.querySelector('input').onchange=()=>{existingImages.forEach(x=>x.isPrimary=false);img.isPrimary=true;syncHidden();};
+        col.querySelector('button').onclick=()=>{if(confirm('Xóa ảnh?')){ if(img.imageId){ fetch(`/Admin/Product/DeleteImage/${img.imageId}`,{method:'DELETE'});} else if(img.clientKey){ uploadFileByClientKey.delete(img.clientKey);} existingImages.splice(i,1);renderImages();syncHidden();}};
+        imageGrid.appendChild(col);
+        });
+        new Sortable(imageGrid,{
+        animation:150,
+        onEnd:()=>{
+        const keys=[...imageGrid.children].map(el=>el.dataset.clientKey);
+        const pos=new Map(keys.map((k,i)=>[k,i]));
+        existingImages.sort((a,b)=> (pos.get(a.clientKey) ?? 1e9) - (pos.get(b.clientKey) ?? 1e9));
+        existingImages.forEach((x,idx)=> x.sortOrder=idx+1);
+        syncHidden();
+        }
+        });
+        }
+
+        function syncHidden(){
+        document.getElementById('AttributesJson').value = JSON.stringify(attrs);
+        document.getElementById('VariantsJson').value = JSON.stringify(variants);
+        document.getElementById('ExistingImagesJson').value = JSON.stringify(existingImages);
+        const dsEl = document.getElementById('DetailSpecsJson');
+        if (dsEl) dsEl.value = JSON.stringify(detailSpecs.map(r => ({ label: (r.label || '').trim(), value: (r.value || '').trim() })));
+        localStorage.setItem('admin-product-draft', JSON.stringify({name:document.getElementById('Name').value,slug:document.getElementById('Slug').value,attrs,variants}));
+        }
+
+        document.getElementById('btnAddAttr').onclick=()=>{attrs.push({name:'',values:[]});renderAttrs();syncHidden();};
+        document.getElementById('btnGenerateVariants').onclick=()=>{
+        const values = attrs.map(a=>a.values?.filter(Boolean)||[]).filter(x=>x.length>0);
+        if(!values.length){alert('Chưa có thuộc tính');return;}
+        const keyOf = (arr)=>(arr||[]).map(x=>(x||'').trim().toLowerCase()).join('||');
+        const oldMap = new Map(variants.map(v => [keyOf(v.values), v]));
+        const next = [];
+        const generatedKeys = new Set();
+        cartesian(values).forEach(c => {
+        const key = keyOf(c);
+        generatedKeys.add(key);
+        const old = oldMap.get(key);
+        next.push({
+        variantId: old?.variantId ?? null,
+        variantLabel: c.join(' - '),
+        values: c,
+        sku: old?.sku || buildSku(c),
+        price: old?.price ?? 0,
+        originalPrice: old?.originalPrice ?? null,
+        isActive: old?.isActive ?? true,
+        quantityAvailable: old?.quantityAvailable ?? 0,
+        lowStockThreshold: old?.lowStockThreshold ?? 5
+        });
+        });
+        // Keep legacy/manual variants that do not belong to generated attribute matrix.
+        const orphans = variants.filter(v => !generatedKeys.has(keyOf(v.values)));
+        orphans.forEach(v => next.push({
+        variantId: v.variantId ?? null,
+        variantLabel: v.variantLabel || 'Manual',
+        values: Array.isArray(v.values) ? v.values : [],
+        sku: v.sku || buildSku(['manual', Date.now().toString().slice(-4)]),
+        price: v.price ?? 0,
+        originalPrice: v.originalPrice ?? null,
+        isActive: v.isActive ?? true,
+        quantityAvailable: v.quantityAvailable ?? 0,
+        lowStockThreshold: v.lowStockThreshold ?? 5
+        }));
+        variants.splice(0, variants.length, ...next);
+        renderVariants();syncHidden(); document.querySelector('[data-step="3"]').click();
+        };
+        document.getElementById('btnAddVariant').onclick=()=>{variants.push({variantId:null,variantLabel:'Manual',values:[],sku:buildSku(['manual',Date.now().toString().slice(-4)]),price:0,originalPrice:null,isActive:true,quantityAvailable:0,lowStockThreshold:5});renderVariants();syncHidden();};
+        document.getElementById('btnBulkPrice').onclick=()=>{const p=Number(document.getElementById('bulkPrice').value||0);variants.forEach(v=>v.price=p);renderVariants();syncHidden();};
+        document.getElementById('uploadImages').onchange=(e)=>{
+        [...e.target.files].forEach(f=>{
+        const key = newClientKey();
+        uploadFileByClientKey.set(key, f);
+        existingImages.push({
+        clientKey:key,
+        imageId:null,
+        imageUrl:URL.createObjectURL(f),
+        isPrimary:!existingImages.length,
+        sortOrder:existingImages.length+1
+        });
+        });
+        renderImages();syncHidden();
+        };
+        const imageUrlInput=document.getElementById('imageUrlInput');
+        document.getElementById('btnAddImageUrl').onclick=()=>{
+        const raw=(imageUrlInput.value||'').trim();
+        if(!raw) return;
+        const urls=raw.split(/\s+/).map(x=>x.trim()).filter(Boolean);
+        if(!urls.length) return;
+
+        const hasPrimary=existingImages.some(x=>x.isPrimary);
+        let makePrimary=!hasPrimary;
+        urls.forEach(url=>{
+        if(makePrimary){
+        existingImages.forEach(x=>x.isPrimary=false);
+        existingImages.push({clientKey:newClientKey(),imageId:null,imageUrl:url,isPrimary:true,sortOrder:existingImages.length+1});
+        makePrimary=false;
+        }else{
+        existingImages.push({clientKey:newClientKey(),imageId:null,imageUrl:url,isPrimary:false,sortOrder:existingImages.length+1});
+        }
+        });
+
+        imageUrlInput.value='';
+        renderImages();syncHidden();
+        };
+        imageUrlInput.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); document.getElementById('btnAddImageUrl').click(); } });
+        document.getElementById('productWizardForm').addEventListener('submit', (e)=>{
+        syncHidden();
+
+        if(!variants.some(v=>v.isActive)){
+        e.preventDefault();
+        alert('Phải có ít nhất 1 biến thể active');
+        return;
+        }
+        if(variants.some(v=>Number(v.price)<=0)){
+        e.preventDefault();
+        alert('Có biến thể chưa nhập giá hợp lệ');
+        return;
+        }
+
+        // Keep uploaded file order aligned with the dragged order.
+        // Otherwise server-side mapping can swap images.
+        const uploadInput = document.getElementById('uploadImages');
+        if(uploadInput && window.DataTransfer && uploadFileByClientKey.size > 0){
+        const dt = new DataTransfer();
+        existingImages.forEach(img=>{
+        if(img.imageId != null) return; // existing saved image
+        if(!img.imageUrl || !img.imageUrl.startsWith('blob:')) return; // URL-only image
+        if(!img.clientKey) return;
+        const file = uploadFileByClientKey.get(img.clientKey);
+        if(file) dt.items.add(file);
+        });
+        uploadInput.files = dt.files;
+        }
+
+        document.getElementById('btnSubmit').disabled=true;
+        });
+
+        if(localStorage.getItem('admin-product-draft') && !@isEdit.ToString().ToLower()){
+        if(confirm('Có draft chưa lưu, tiếp tục?')){
+        const d=JSON.parse(localStorage.getItem('admin-product-draft')); document.getElementById('Name').value=d.name||''; document.getElementById('Slug').value=d.slug||''; attrs.splice(0,attrs.length,...(d.attrs||[])); variants.splice(0,variants.length,...(d.variants||[]));
+        }else{ localStorage.removeItem('admin-product-draft');}
+        }
+        setInterval(syncHidden,30000);
+        renderAttrs(); renderVariants(); renderImages(); renderDetailSpecs(); syncHidden();
+    </script>
+}

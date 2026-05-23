@@ -1,0 +1,92 @@
+@model VanAnhPerfume.Models.ViewModels.BrandPageVM
+@{
+    ViewData["Title"] = "Thương hiệu " + Model.Brand.Name;
+    const string brandLogoFallback = "/images/brand-placeholder.svg";
+}
+<section class="pt-4">
+<div class="small text-muted mb-2 site-container">Trang chủ &gt; Thương hiệu &gt; @Model.Brand.Name</div>
+<div class="bg-light p-4 mb-4 position-relative" style="background-image:url('@(Model.Brand.BannerUrl ?? "")');background-size:cover;background-position:center;">
+    <div class="site-container d-flex align-items-center gap-3">
+        @if (!string.IsNullOrWhiteSpace(Model.Brand.LogoUrl ?? Model.Brand.Logo))
+        {
+            <img src="@(Model.Brand.LogoUrl ?? Model.Brand.Logo)"
+                 onerror="this.onerror=null;this.src='@brandLogoFallback';"
+                 width="80"
+                 height="80"
+                 alt="@Model.Brand.Name"
+                 style="object-fit:cover;border-radius:50%;border:3px solid var(--color-surface);" />
+        }
+        <div>
+            <h2 class="mb-0">@Model.Brand.Name</h2>
+            <div class="text-muted">Thương hiệu từ @(Model.Brand.CountryOfOrigin ?? Model.Brand.Country)</div>
+            @if (!string.IsNullOrWhiteSpace(Model.Brand.Website))
+            {
+                <a href="@Model.Brand.Website" target="_blank" rel="noopener">Website chính thức</a>
+            }
+        </div>
+    </div>
+</div>
+@if (!string.IsNullOrWhiteSpace(Model.Brand.Description))
+{
+    <div class="site-container mb-3">@Html.Raw(Model.Brand.Description)</div>
+}
+
+<div class="site-container section-block pt-0">
+    <form method="get" class="row g-2 mb-3 border p-3">
+        <div class="col-md-2">
+            <select class="form-select" name="sort">
+                <option value="">Mặc định</option>
+                <option value="price_asc" selected="@(Model.Listing.Sort=="price_asc")">Giá tăng dần</option>
+                <option value="price_desc" selected="@(Model.Listing.Sort=="price_desc")">Giá giảm dần</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <select class="form-select" name="gender">
+                <option value="">Giới tính</option>
+                <option value="Nam" selected="@(Model.Listing.Gender=="Nam")">Nam</option>
+                <option value="Nữ" selected="@(Model.Listing.Gender=="Nữ")">Nữ</option>
+                <option value="Unisex" selected="@(Model.Listing.Gender=="Unisex")">Unisex</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <select class="form-select" name="concentration">
+                <option value="">Nồng độ</option>
+                <option value="Parfum" selected="@(Model.Listing.Concentration=="Parfum")">Parfum</option>
+                <option value="EDP" selected="@(Model.Listing.Concentration=="EDP")">EDP</option>
+                <option value="EDT" selected="@(Model.Listing.Concentration=="EDT")">EDT</option>
+                <option value="EDC" selected="@(Model.Listing.Concentration=="EDC")">EDC</option>
+                <option value="Other" selected="@(Model.Listing.Concentration=="Other")">Other</option>
+            </select>
+        </div>
+        <div class="col-md-2"><input class="form-control" name="minPrice" type="number" placeholder="Giá từ" value="@Model.Listing.MinPrice" /></div>
+        <div class="col-md-2"><input class="form-control" name="maxPrice" type="number" placeholder="Đến" value="@Model.Listing.MaxPrice" /></div>
+        <div class="col-md-2"><button class="btn btn-primary-lux w-100">Lọc</button></div>
+    </form>
+
+    <div class="product-grid">
+        @foreach (var item in Model.Listing.Products)
+        {
+            <article class="product-card">
+                <a href="/Product/Detail/@item.ProductId" class="product-thumb d-block">
+                    <img class="product-thumb-main" src="@item.ImageUrl" alt="@item.ProductName" />
+                    <img class="product-thumb-hover" src="@(item.HoverImageUrl ?? item.ImageUrl)" alt="@item.ProductName" />
+                </a>
+                <div class="p-3 d-flex flex-column">
+                    <h6 class="mb-2"><a href="/Product/Detail/@item.ProductId" class="text-dark text-decoration-none">@item.ProductName</a></h6>
+                    <div class="fw-bold mt-auto mb-0">@item.FormattedPrice</div>
+                </div>
+            </article>
+        }
+    </div>
+    <nav class="mt-3">
+        <ul class="pagination">
+            @for (var i = 1; i <= Model.Listing.TotalPages; i++)
+            {
+                <li class="page-item @(i == Model.Listing.Page ? "active" : "")">
+                    <a class="page-link" asp-action="Brand" asp-route-slug="@Model.Listing.BrandSlug" asp-route-sort="@Model.Listing.Sort" asp-route-gender="@Model.Listing.Gender" asp-route-concentration="@Model.Listing.Concentration" asp-route-minPrice="@Model.Listing.MinPrice" asp-route-maxPrice="@Model.Listing.MaxPrice" asp-route-page="@i">@i</a>
+                </li>
+            }
+        </ul>
+    </nav>
+</div>
+</section>

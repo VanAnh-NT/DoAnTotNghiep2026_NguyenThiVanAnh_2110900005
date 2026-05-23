@@ -1,0 +1,69 @@
+﻿@inject VanAnhPerfume.Data.VanAnhPerfumeContext Db
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Quản trị hệ thống</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="~/css/main.css" asp-append-version="true" />
+</head>
+<body>
+    @{
+        var adminController = ViewContext.RouteData.Values["controller"]?.ToString() ?? string.Empty;
+        string NavClass(string controller) => adminController.Equals(controller, StringComparison.OrdinalIgnoreCase) ? "active" : string.Empty;
+        var unreadNotifications = Db.AdminNotifications.Count(x => !x.IsRead);
+    }
+    <div class="admin-shell">
+        <aside class="admin-sidebar">
+            <div class="px-3 py-2 border-bottom border-secondary mb-2">
+                <h5 class="text-white m-0">VÂN ANH PERFUME ADMIN</h5>
+            </div>
+            <div>
+                    <a asp-area="Admin" asp-controller="Main" asp-action="Index" class="@NavClass("Main")">
+                        <i class="bi bi-speedometer2 me-2"></i> Dashboard
+                    </a>
+                    <a asp-area="Admin" asp-controller="Product" asp-action="Index" class="@NavClass("Product")"><i class="bi bi-box-seam me-2"></i> Sản phẩm</a>
+                    <a asp-area="Admin" asp-controller="Category" asp-action="Index" class="@NavClass("Category")"><i class="bi bi-tags me-2"></i> Danh mục</a>
+                    <a asp-area="Admin" asp-controller="Brand" asp-action="Index" class="@NavClass("Brand")"><i class="bi bi-award me-2"></i> Thương hiệu</a>
+                    <a asp-area="Admin" asp-controller="News" asp-action="Index" class="@NavClass("News")"><i class="bi bi-newspaper me-2"></i> Bài viết</a>
+                    <a asp-area="Admin" asp-controller="Banner" asp-action="Index" class="@NavClass("Banner")"><i class="bi bi-image me-2"></i> Banner</a>
+                    <a asp-area="Admin" asp-controller="Inventory" asp-action="Index" class="@NavClass("Inventory")"><i class="bi bi-archive me-2"></i> Tồn kho</a>
+                    <a asp-area="Admin" asp-controller="Order" asp-action="Index" class="@NavClass("Order")"><i class="bi bi-cart3 me-2"></i> Đơn hàng</a>
+                    <a asp-area="Admin" asp-controller="Promotion" asp-action="Index" class="@NavClass("Promotion")"><i class="bi bi-ticket-perforated me-2"></i> Khuyến mãi</a>
+                    <a asp-area="Admin" asp-controller="Review" asp-action="Index" class="@NavClass("Review")"><i class="bi bi-star me-2"></i> Đánh giá</a>
+                    <a asp-area="Admin" asp-controller="Payment" asp-action="Index" class="@NavClass("Payment")"><i class="bi bi-credit-card me-2"></i> Thanh toán</a>
+                    <a asp-area="Admin" asp-controller="Customer" asp-action="Index" class="@NavClass("Customer")"><i class="bi bi-person-lines-fill me-2"></i> Khách hàng</a>
+                    <a asp-area="Admin" asp-controller="Accounts" asp-action="Index" class="@NavClass("Accounts")"><i class="bi bi-shield-lock me-2"></i> Tài khoản &amp; phân quyền</a>
+                    <hr class="mx-3 border-secondary">
+                    <a href="/"><i class="bi bi-house-door me-2"></i> Xem trang chủ</a>
+            </div>
+        </aside>
+        <main class="admin-main">
+            <div class="admin-topbar">
+                <div class="fw-semibold">Admin Control Center</div>
+                <div class="d-flex align-items-center gap-3">
+                    <a asp-area="Admin" asp-controller="Inventory" asp-action="Logs" class="text-dark text-decoration-none position-relative">
+                        <i class="bi bi-bell fs-5"></i>
+                        @if (unreadNotifications > 0)
+                        {
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">@unreadNotifications</span>
+                        }
+                    </a>
+                    <div><i class="bi bi-person-circle me-2"></i>@User.Identity?.Name</div>
+                </div>
+            </div>
+            <div class="admin-content">
+                @RenderBody()
+            </div>
+        </main>
+    </div>
+
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

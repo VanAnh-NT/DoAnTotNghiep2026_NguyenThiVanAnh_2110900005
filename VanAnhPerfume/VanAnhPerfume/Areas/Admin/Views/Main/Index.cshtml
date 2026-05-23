@@ -1,0 +1,202 @@
+﻿@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Bảng điều khiển";
+    decimal todayRevenue = ViewBag.TodayRevenue ?? 0m;
+    decimal yesterdayRevenue = ViewBag.YesterdayRevenue ?? 0m;
+    decimal thisMonthRevenue = ViewBag.ThisMonthRevenue ?? 0m;
+    decimal lastMonthRevenue = ViewBag.LastMonthRevenue ?? 0m;
+    decimal aov = ViewBag.Aov ?? 0m;
+    decimal conversionRate = ViewBag.ConversionRate ?? 0m;
+    var lowStockProducts = ViewBag.LowStockProducts as IEnumerable<dynamic> ?? [];
+    var stalePendingOrders = ViewBag.StalePendingOrders as IEnumerable<dynamic> ?? [];
+    string Diff(decimal current, decimal previous)
+    {
+        if (previous == 0) return current > 0 ? "+100%" : "0%";
+        var pct = ((current - previous) / previous) * 100m;
+        return (pct >= 0 ? "+" : string.Empty) + pct.ToString("N1") + "%";
+    }
+}
+<h1 class="h3 mb-4">Tổng quan quản trị</h1>
+<div class="row g-3">
+    <div class="col-md-3">
+        <div class="border p-3 position-relative" style="border-radius:8px;">
+            <small class="text-uppercase text-muted">Tổng đơn hàng</small>
+            <h2 class="m-0" style="font-family:'Playfair Display',serif;">@ViewBag.TotalOrders</h2>
+            <div class="small text-success">+12% so với tháng trước</div>
+            <i class="bi bi-cart-check position-absolute top-50 end-0 translate-middle-y me-3 text-muted" style="font-size:2rem;"></i>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="border p-3 position-relative" style="border-radius:8px;">
+            <small class="text-uppercase text-muted">Doanh thu</small>
+            <h2 class="m-0" style="font-family:'Playfair Display',serif;">@ViewBag.TotalRevenue</h2>
+            <div class="small text-success">@Diff(thisMonthRevenue, lastMonthRevenue) so với tháng trước</div>
+            <i class="bi bi-currency-dollar position-absolute top-50 end-0 translate-middle-y me-3 text-muted" style="font-size:2rem;"></i>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="border p-3 position-relative" style="border-radius:8px;">
+            <small class="text-uppercase text-muted">Sản phẩm</small>
+            <h2 class="m-0" style="font-family:'Playfair Display',serif;">@ViewBag.TotalProducts</h2>
+            <div class="small text-danger">-2% so với tháng trước</div>
+            <i class="bi bi-box-seam position-absolute top-50 end-0 translate-middle-y me-3 text-muted" style="font-size:2rem;"></i>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="border p-3 position-relative" style="border-radius:8px;">
+            <small class="text-uppercase text-muted">AOV tháng này</small>
+            <h2 class="m-0" style="font-family:'Playfair Display',serif;">@aov.ToString("N0") ₫</h2>
+            <div class="small text-muted">Average Order Value</div>
+            <i class="bi bi-graph-up position-absolute top-50 end-0 translate-middle-y me-3 text-muted" style="font-size:2rem;"></i>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mt-1 mb-3">
+    <div class="col-md-4">
+        <div class="border p-3 h-100" style="border-radius:8px;">
+            <small class="text-uppercase text-muted">So sánh doanh thu hôm nay</small>
+            <div class="mt-2 fw-semibold">@todayRevenue.ToString("N0") ₫</div>
+            <div class="small text-muted">Hôm qua: @yesterdayRevenue.ToString("N0") ₫</div>
+            <div class="small text-success">@Diff(todayRevenue, yesterdayRevenue)</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="border p-3 h-100" style="border-radius:8px;">
+            <small class="text-uppercase text-muted">So sánh doanh thu tháng</small>
+            <div class="mt-2 fw-semibold">@thisMonthRevenue.ToString("N0") ₫</div>
+            <div class="small text-muted">Tháng trước: @lastMonthRevenue.ToString("N0") ₫</div>
+            <div class="small text-success">@Diff(thisMonthRevenue, lastMonthRevenue)</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="border p-3 h-100" style="border-radius:8px;">
+            <small class="text-uppercase text-muted">Conversion rate tháng này</small>
+            <div class="mt-2 fw-semibold">@((conversionRate * 100).ToString("N2"))%</div>
+            <div class="small text-muted">Đơn hàng / lượt add-to-cart</div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mt-1">
+    <div class="col-lg-8">
+        <div class="border p-3" style="border-radius:8px;">
+            <h5 class="mb-3">Doanh thu 30 ngày gần nhất</h5>
+            <canvas id="revenueChart" height="120"></canvas>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="border p-3" style="border-radius:8px;">
+            <h5 class="mb-3">Top 5 sản phẩm bán chạy</h5>
+            <canvas id="topProductsChart" height="120"></canvas>
+        </div>
+    </div>
+</div>
+<div class="row g-3 mt-1">
+    <div class="col-lg-6">
+        <div class="border p-3" style="border-radius:8px;">
+            <h5 class="mb-3">Doanh thu theo danh mục</h5>
+            <canvas id="categoryRevenueChart" height="150"></canvas>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="border p-3" style="border-radius:8px;">
+            <h5 class="mb-3">Doanh thu theo thương hiệu</h5>
+            <canvas id="brandRevenueChart" height="150"></canvas>
+        </div>
+    </div>
+</div>
+<div class="row g-3 mt-1">
+    <div class="col-lg-6">
+        <div class="border p-3" style="border-radius:8px;">
+            <h5 class="mb-3 text-danger">Cảnh báo tồn kho thấp</h5>
+            @if (!lowStockProducts.Any())
+            {
+                <div class="text-muted small">Không có sản phẩm nào sắp hết hàng.</div>
+            }
+            else
+            {
+                <ul class="mb-0">
+                    @foreach (var item in lowStockProducts)
+                    {
+                        <li>@item.Name - @item.Size [@item.Sku] (sellable: @item.Sellable)</li>
+                    }
+                </ul>
+            }
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="border p-3" style="border-radius:8px;">
+            <h5 class="mb-3 text-danger">Đơn pending lâu</h5>
+            @if (!stalePendingOrders.Any())
+            {
+                <div class="text-muted small">Không có đơn pending quá 24 giờ.</div>
+            }
+            else
+            {
+                <ul class="mb-0">
+                    @foreach (var item in stalePendingOrders)
+                    {
+                        <li>
+                            #@item.OrderId - @item.FullName (@(((DateTime?)item.OrderDate)?.ToString("dd/MM HH:mm")))
+                        </li>
+                    }
+                </ul>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        async function initRevenueChart() {
+            const data = await (await fetch('/Admin/Main/RevenueChart')).json();
+            new Chart(document.getElementById('revenueChart'), {
+                type: 'line',
+                data: {
+                    labels: data.map(x => x.date),
+                    datasets: [{ label: 'Doanh thu', data: data.map(x => x.revenue), borderColor: '#c9a96e', backgroundColor: 'rgba(201,169,110,.2)', fill: true, tension: .35 }]
+                },
+                options: { plugins: { legend: { display: false } } }
+            });
+        }
+        async function initTopProductsChart() {
+            const data = await (await fetch('/Admin/Main/TopProducts')).json();
+            new Chart(document.getElementById('topProductsChart'), {
+                type: 'bar',
+                data: {
+                    labels: data.map(x => x.productName),
+                    datasets: [{ data: data.map(x => x.qty), backgroundColor: '#1a1a1a' }]
+                },
+                options: { plugins: { legend: { display: false } } }
+            });
+        }
+        async function initRevenueByCategory() {
+            const data = await (await fetch('/Admin/Main/RevenueByCategory')).json();
+            new Chart(document.getElementById('categoryRevenueChart'), {
+                type: 'bar',
+                data: {
+                    labels: data.map(x => x.label),
+                    datasets: [{ data: data.map(x => x.revenue), backgroundColor: '#8c6b3f' }]
+                },
+                options: { plugins: { legend: { display: false } } }
+            });
+        }
+        async function initRevenueByBrand() {
+            const data = await (await fetch('/Admin/Main/RevenueByBrand')).json();
+            new Chart(document.getElementById('brandRevenueChart'), {
+                type: 'bar',
+                data: {
+                    labels: data.map(x => x.label),
+                    datasets: [{ data: data.map(x => x.revenue), backgroundColor: '#1a1a1a' }]
+                },
+                options: { plugins: { legend: { display: false } } }
+            });
+        }
+        initRevenueChart();
+        initTopProductsChart();
+        initRevenueByCategory();
+        initRevenueByBrand();
+    </script>
+}

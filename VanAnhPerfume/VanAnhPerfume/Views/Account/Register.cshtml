@@ -1,0 +1,52 @@
+﻿@model VanAnhPerfume.Models.ViewModels.RegisterVM
+
+@{
+    Layout = "_AuthLayout";
+    ViewData["Title"] = "Đăng ký thành viên";
+}
+
+<p class="auth-page-subtitle">Đăng ký thành viên</p>
+
+<form asp-action="Register" method="post">
+    <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
+
+    <div class="mb-3">
+        <label asp-for="FullName" class="form-label">Họ và tên</label>
+        <input asp-for="FullName" class="form-control" placeholder="Ví dụ: Vân Anh" />
+        <span asp-validation-for="FullName" class="text-danger small"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Email" class="form-label">Email</label>
+        <input asp-for="Email" class="form-control" placeholder="email@vi-du.com" autocomplete="email" />
+        <span asp-validation-for="Email" class="text-danger small"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Phone" class="form-label">Số điện thoại</label>
+        <input asp-for="Phone" class="form-control" inputmode="numeric" autocomplete="tel" />
+        <span asp-validation-for="Phone" class="text-danger small"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Password" class="form-label">Mật khẩu</label>
+        <input asp-for="Password" type="password" class="form-control" autocomplete="new-password" />
+        <span asp-validation-for="Password" class="text-danger small"></span>
+    </div>
+
+    <div class="mb-4">
+        <label asp-for="ConfirmPassword" class="form-label">Xác nhận mật khẩu</label>
+        <input asp-for="ConfirmPassword" type="password" class="form-control" autocomplete="new-password" />
+        <span asp-validation-for="ConfirmPassword" class="text-danger small"></span>
+    </div>
+
+    <button type="submit" class="auth-btn-primary mb-3">Tạo tài khoản</button>
+</form>
+
+<div class="auth-links small">
+    <p class="mb-0">Đã là thành viên? <a asp-action="Login" class="auth-link-gold">ĐĂNG NHẬP</a></p>
+</div>
+
+@section Scripts {
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+}

@@ -1,0 +1,19 @@
+@model IEnumerable<VanAnhPerfume.Models.ViewModels.ProductHomeVM>
+@foreach (var item in Model)
+{
+    <article class="product-card">
+        <a href="/Product/Detail/@item.ProductId" class="product-thumb position-relative d-block">
+            @if (item.IsNew)
+            {
+                <span class="position-absolute top-0 start-0 m-2 px-2 py-1 bg-dark text-white small">MỚI</span>
+            }
+            <img class="product-thumb-main" src="@item.ImageUrl" alt="@item.ProductName" />
+            <img class="product-thumb-hover" src="@(item.HoverImageUrl ?? item.ImageUrl)" alt="@item.ProductName" />
+        </a>
+        <div class="p-3">
+            <div class="label-uppercase text-muted">@item.BrandName</div>
+            <h3 class="h6 my-2"><a href="/Product/Detail/@item.ProductId" class="text-dark text-decoration-none">@item.ProductName</a></h3>
+            <span class="fw-semibold">@item.FormattedPrice</span>
+        </div>
+    </article>
+}

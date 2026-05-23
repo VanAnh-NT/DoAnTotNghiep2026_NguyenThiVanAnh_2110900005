@@ -1,0 +1,68 @@
+@model IEnumerable<VanAnhPerfume.Models.Entities.News>
+@{
+    Layout = "_AdminLayout";
+    string StatusBadge(string? s) => s == "Published" ? "bg-success" : "bg-secondary";
+}
+<h4>Quản lý bài viết</h4>
+@if (TempData["Success"] != null) { <div class="alert alert-success">@TempData["Success"]</div> }
+<div class="d-flex justify-content-between mb-3">
+    <form method="get" class="d-flex gap-2">
+        <input name="q" value="@ViewBag.Query" class="form-control" placeholder="Tìm tiêu đề" />
+        <select name="status" class="form-select"><option value="">Tất cả</option><option value="Draft" selected="@(ViewBag.Status=="Draft")">Draft</option><option value="Published" selected="@(ViewBag.Status=="Published")">Published</option></select>
+        <select name="tag" class="form-select"><option value="">Tag</option>@foreach(var t in (List<string>)ViewBag.Tags){<option selected="@(ViewBag.Tag==t)">@t</option>}</select>
+        <select name="sort" class="form-select"><option value="">Ngày tạo</option><option value="published" selected="@(ViewBag.Sort=="published")">Ngày đăng</option><option value="views" selected="@(ViewBag.Sort=="views")">Lượt xem</option></select>
+        <button class="btn btn-secondary-lux">Lọc</button>
+    </form>
+    <a asp-action="Create" class="btn btn-primary">Viết bài mới</a>
+</div>
+@if (Model.Any())
+{
+<form id="bulkForm" method="post">
+<div class="mb-2 d-flex gap-2">
+    <button formaction="/Admin/News/BulkPublish" class="btn btn-sm btn-outline-success">Publish tất cả đã chọn</button>
+    <button formaction="/Admin/News/BulkDelete" class="btn btn-sm btn-outline-danger" onclick="return confirm('Xóa các bài đã chọn?')">Xóa</button>
+</div>
+<div class="table-responsive">
+    <table class="table table-lux align-middle">
+        <thead><tr><th></th><th>Thumbnail</th><th>Tiêu đề</th><th>Tag</th><th>Tác giả</th><th>Trạng thái</th><th>Lượt xem</th><th>Ngày đăng</th><th>Action</th></tr></thead>
+        <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td><input type="checkbox" name="ids" value="@item.NewsId" /></td>
+                <td><img src="@(item.ThumbnailUrl ?? "/images/default-perfume.jpg")" width="110" style="aspect-ratio:16/9;object-fit:cover" /></td>
+                <td>@item.Title @(item.IsFeatured ? Html.Raw("<span class='badge bg-warning text-dark ms-1'>Nổi bật</span>") : null)</td>
+                <td>@item.CategoryTag</td>
+                <td>@item.AuthorName</td>
+                <td><button type="button" class="btn btn-sm @StatusBadge(item.NewsStatus)" onclick="toggleStatus(@item.NewsId,this)">@item.NewsStatus</button></td>
+                <td>@item.ViewCount</td>
+                <td>@item.PublishAt?.ToString("dd/MM/yyyy HH:mm")</td>
+                <td class="d-flex gap-1">
+                    <a asp-action="Edit" asp-route-id="@item.NewsId" class="btn btn-sm btn-outline-dark">Sửa</a>
+                    <a href="/Home/BlogDetail/@item.NewsId" target="_blank" class="btn btn-sm btn-outline-secondary">Preview</a>
+                    <form asp-action="Delete" method="post">
+                        <input type="hidden" name="id" value="@item.NewsId" />
+                        <button class="btn btn-sm btn-outline-danger" onclick="return confirm(@(item.ViewCount > 100 ? "'Bài viết có lượt đọc cao. Bạn chắc chắn xóa?'" : "'Xóa bài viết này?'"))">Xóa</button>
+                    </form>
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>
+</form>
+<nav><ul class="pagination">@for(var i=1;i<=(int)ViewBag.TotalPages;i++){<li class="page-item @(i==(int)ViewBag.Page?"active":"")"><a class="page-link" asp-action="Index" asp-route-page="@i" asp-route-q="@ViewBag.Query" asp-route-status="@ViewBag.Status" asp-route-tag="@ViewBag.Tag" asp-route-sort="@ViewBag.Sort">@i</a></li>}</ul></nav>
+}
+else
+{
+    <partial name="_AdminEmptyList" />
+}
+@section Scripts{
+<script>
+async function toggleStatus(id, btn){
+ const res = await fetch('/Admin/News/ToggleStatus',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:`id=${id}`});
+ const data = await res.json();
+ if(data.success){btn.textContent=data.status;btn.className='btn btn-sm '+(data.status==='Published'?'bg-success':'bg-secondary');}
+}
+</script>
+}

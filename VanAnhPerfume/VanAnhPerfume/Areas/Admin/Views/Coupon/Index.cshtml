@@ -1,0 +1,82 @@
+@model IEnumerable<VanAnhPerfume.Models.Entities.Coupon>
+@{
+    Layout = "_AdminLayout";
+}
+<h4>Quản lý coupon</h4>
+@if (TempData["Success"] != null) { <div class="alert alert-success">@TempData["Success"]</div> }
+@if (TempData["Error"] != null) { <div class="alert alert-danger">@TempData["Error"]</div> }
+<div class="alert alert-warning">
+    Coupon đã chuyển sang chế độ legacy. Checkout hiện chỉ dùng <strong>Promotion</strong>.
+</div>
+<form method="get" class="d-flex gap-2 mb-3">
+    <input name="q" value="@ViewBag.Query" class="form-control" placeholder="Tìm coupon code" />
+    <button class="btn btn-secondary-lux">Lọc</button>
+</form>
+<form asp-action="Create" method="post" class="row g-2 mb-3 d-none">
+    <div class="col-md-2"><input name="Code" class="form-control" placeholder="CODE" required /></div>
+    <div class="col-md-2">
+        <select name="DiscountType" class="form-select">
+            <option value="Percent">Percent</option>
+            <option value="Fixed">Fixed</option>
+        </select>
+    </div>
+    <div class="col-md-1"><input name="Value" type="number" class="form-control" placeholder="Value" required /></div>
+    <div class="col-md-2"><input name="MinOrderValue" type="number" class="form-control" placeholder="Min order" required /></div>
+    <div class="col-md-2"><input name="ExpiryDate" type="date" class="form-control" required /></div>
+    <div class="col-md-2"><input name="StartDate" type="date" class="form-control" /></div>
+    <div class="col-md-1"><input name="UsageLimit" type="number" class="form-control" placeholder="Limit" required /></div>
+    <div class="col-md-1"><input name="PerUserLimit" type="number" class="form-control" placeholder="Per user" /></div>
+    <div class="col-md-2"><input name="ApplicableCategoryIds" class="form-control" placeholder="Category IDs (1,2)" /></div>
+    <div class="col-md-2"><input name="ApplicableProductIds" class="form-control" placeholder="Product IDs (1,2)" /></div>
+    <div class="col-md-1"><label class="small">Auto</label><input type="checkbox" name="AutoApply" value="true" class="form-check-input ms-2" /></div>
+    <div class="col-md-1"><button class="btn btn-primary w-100">Thêm</button></div>
+</form>
+@if (Model.Any())
+{
+<div class="table-responsive">
+    <table class="table table-lux">
+        <thead><tr><th>Code</th><th>Loại</th><th>Giá trị</th><th>Min</th><th>Bắt đầu/Kết thúc</th><th>Đã dùng/Giới hạn</th><th>Scope</th><th>Auto</th><th>Trạng thái</th><th></th></tr></thead>
+        <tbody>
+        @foreach (var c in Model)
+        {
+            var expired = c.ExpiryDate < DateTime.UtcNow;
+            <tr>
+                <td>@c.Code</td>
+                <td>@c.DiscountType</td>
+                <td>@c.Value</td>
+                <td>@c.MinOrderValue</td>
+                <td>@c.StartDate?.ToString("dd/MM/yyyy") - @c.ExpiryDate.ToString("dd/MM/yyyy")</td>
+                <td>@c.UsedCount/@c.UsageLimit @(c.PerUserLimit.HasValue ? $"(user:{c.PerUserLimit})" : "")</td>
+                <td>C:@c.ApplicableCategoryIds<br/>P:@c.ApplicableProductIds</td>
+                <td>@(c.AutoApply ? "Yes" : "No")</td>
+                <td>@(c.IsActive && !expired ? "Active" : "Expired/Inactive")</td>
+                <td>
+                    <form asp-action="ToggleActive" method="post" class="d-inline d-none">
+                        <input type="hidden" name="id" value="@c.Id" />
+                        <button class="btn btn-sm btn-outline-dark">Toggle</button>
+                    </form>
+                    <form asp-action="Delete" method="post" class="d-inline d-none">
+                        <input type="hidden" name="id" value="@c.Id" />
+                        <button class="btn btn-sm btn-danger">Xóa</button>
+                    </form>
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>
+<nav>
+    <ul class="pagination">
+        @for (var i = 1; i <= (int)ViewBag.TotalPages; i++)
+        {
+            <li class="page-item @(i == (int)ViewBag.Page ? "active" : "")">
+                <a class="page-link" asp-action="Index" asp-route-q="@ViewBag.Query" asp-route-page="@i">@i</a>
+            </li>
+        }
+    </ul>
+</nav>
+}
+else
+{
+    <partial name="_AdminEmptyList" />
+}

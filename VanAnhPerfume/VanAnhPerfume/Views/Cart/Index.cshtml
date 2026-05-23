@@ -1,0 +1,199 @@
+﻿@model IEnumerable<VanAnhPerfume.Models.ViewModels.CartItemVM>
+@using VanAnhPerfume.Helpers
+@{
+    var subtotal = Model.Sum(x => x.Total);
+    var shipping = subtotal >= 500000 ? 0 : 30000;
+    var promoState = Context.Session.GetObjectFromJson<VanAnhPerfume.Models.ViewModels.CheckoutVM>("VanAnhPromotion");
+    var discount = promoState?.DiscountAmount ?? 0m;
+    if (discount < 0) discount = 0;
+    if (discount > subtotal) discount = subtotal;
+    var total = subtotal + shipping - discount;
+}
+<section class="section-block pt-4">
+    <div class="site-container">
+        <div class="small text-muted mb-2">Trang chủ > Giỏ hàng</div>
+        <h2 class="mb-4">Giỏ hàng của bạn</h2>
+        @if (!Model.Any())
+        {
+            <div class="border p-5 text-center">
+                <p>Giỏ hàng đang trống.</p>
+                <div class="d-flex justify-content-center gap-2 flex-wrap">
+                    <a href="/" class="btn btn-primary-lux">Tiếp tục mua sắm</a>
+                    <a href="/Account/MyOrders" class="btn btn-secondary-lux">Lịch sử đặt hàng</a>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="row g-4">
+                <div class="col-12 col-md-8 border p-3" id="cartItemsWrap">
+                    @foreach (var item in Model)
+                    {
+                        <div class="d-grid align-items-center border-bottom py-3 cart-row" data-variant-id="@item.VariantId" style="grid-template-columns:1fr 110px 120px 120px 30px;gap:12px;">
+                            <div class="d-flex gap-3">
+                                <img src="@item.ImageUrl" style="width:80px;height:80px;object-fit:cover;" />
+                                <div>
+                                    <div class="fw-semibold">@item.ProductName</div>
+                                    <div class="small text-muted">@item.Size</div>
+                                </div>
+                            </div>
+                            <div>@item.Price.ToString("N0") ₫</div>
+                            <div class="input-group input-group-sm">
+                                <button class="btn btn-outline-dark rounded-0 js-qty-minus" type="button">-</button>
+                                <input class="form-control rounded-0 text-center js-qty-input" value="@item.Quantity" min="1" />
+                                <button class="btn btn-outline-dark rounded-0 js-qty-plus" type="button">+</button>
+                            </div>
+                            <div class="fw-semibold js-item-total">@item.Total.ToString("N0") ₫</div>
+                            <button type="button" class="btn btn-link text-danger text-decoration-none p-0 js-remove-item" data-variant-id="@item.VariantId"><i class="bi bi-x-lg"></i></button>
+                        </div>
+                    }
+                </div>
+                <div class="col-12 col-md-4">
+                    <div class="border p-4 position-sticky cart-summary" style="top:100px;">
+                        <h5 class="mb-3">Tóm tắt đơn hàng</h5>
+                        <div class="d-flex justify-content-between mb-2"><span>Tạm tính</span><span id="cartSubtotal">@subtotal.ToString("N0") ₫</span></div>
+                        <div class="d-flex justify-content-between mb-2"><span>Phí ship</span><span id="cartShipping">@(shipping == 0 ? "Miễn phí" : shipping.ToString("N0") + " ₫")</span></div>
+                        <div class="d-flex justify-content-between mb-2"><span>Giảm giá</span><span id="cartDiscount">@discount.ToString("N0") ₫</span></div>
+                        <div class="mb-3">
+                            <label class="small text-uppercase">Mã giảm giá</label>
+                            <div class="input-group">
+                                <input id="cartPromotionCode" class="form-control rounded-0" value="@(promoState?.PromotionCode ?? string.Empty)" placeholder="Nhập mã khuyến mãi" />
+                                <button id="cartApplyPromotionBtn" class="btn btn-secondary-lux" type="button">Áp dụng</button>
+                            </div>
+                            <small id="cartPromotionMessage" class="text-muted d-block mt-2"></small>
+                        </div>
+                        <hr />
+                        <div class="d-flex justify-content-between fw-semibold mb-3"><span>Tổng cộng</span><span id="cartTotal">@total.ToString("N0") ₫</span></div>
+                        <a href="/Account/MyOrders" class="btn btn-secondary-lux w-100 mb-2">Lịch sử đặt hàng</a>
+                        <a asp-action="Checkout" class="btn btn-primary-lux w-100">Tiến hành thanh toán</a>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</section>
+@section Scripts {
+<script>
+    (() => {
+        const formatVnd = v => Number(v || 0).toLocaleString('vi-VN') + ' ₫';
+        const rows = () => Array.from(document.querySelectorAll('.cart-row'));
+        if (!rows().length) return;
+
+        async function syncQuantity(row, quantity) {
+            const variantId = row.getAttribute('data-variant-id');
+            const body = new URLSearchParams({ variantId, quantity });
+            const res = await fetch('/Cart/UpdateQuantity', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-Requested-With': 'XMLHttpRequest' },
+                body
+            });
+            if (!res.ok) return;
+            const data = await res.json();
+            if (!data.success) {
+                if (window.LuxStore) LuxStore.showToast(data.message || 'Không thể cập nhật số lượng', 'error');
+                return;
+            }
+
+            const input = row.querySelector('.js-qty-input');
+            const itemTotal = row.querySelector('.js-item-total');
+            if (input) input.value = data.quantity;
+            if (itemTotal) itemTotal.textContent = formatVnd(data.itemTotal);
+
+            const subtotal = document.getElementById('cartSubtotal');
+            const shipping = document.getElementById('cartShipping');
+            const discount = document.getElementById('cartDiscount');
+            const total = document.getElementById('cartTotal');
+            if (subtotal) subtotal.textContent = formatVnd(data.subtotal);
+            if (shipping) shipping.textContent = Number(data.shipping) === 0 ? 'Miễn phí' : formatVnd(data.shipping);
+            if (discount) discount.textContent = formatVnd(data.discountAmount);
+            if (total) total.textContent = formatVnd(data.total);
+            if (window.LuxStore) LuxStore.updateCartBadge();
+        }
+
+        rows().forEach(row => {
+            const input = row.querySelector('.js-qty-input');
+            const plus = row.querySelector('.js-qty-plus');
+            const minus = row.querySelector('.js-qty-minus');
+            if (!input) return;
+
+            plus?.addEventListener('click', () => {
+                const next = (parseInt(input.value || '1', 10) || 1) + 1;
+                syncQuantity(row, next);
+            });
+            minus?.addEventListener('click', () => {
+                const next = Math.max(1, (parseInt(input.value || '1', 10) || 1) - 1);
+                syncQuantity(row, next);
+            });
+            input.addEventListener('change', () => {
+                const next = Math.max(1, parseInt(input.value || '1', 10) || 1);
+                syncQuantity(row, next);
+            });
+        });
+
+        document.querySelectorAll('.js-remove-item').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const variantId = btn.getAttribute('data-variant-id');
+                const body = new URLSearchParams({ id: variantId });
+                const res = await fetch('/Cart/Remove', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-Requested-With': 'XMLHttpRequest' },
+                    body
+                });
+                if (!res.ok) return;
+                const data = await res.json();
+                if (!data.success) return;
+
+                const row = btn.closest('.cart-row');
+                row?.remove();
+
+                const subtotal = document.getElementById('cartSubtotal');
+                const shipping = document.getElementById('cartShipping');
+                const discount = document.getElementById('cartDiscount');
+                const total = document.getElementById('cartTotal');
+                if (subtotal) subtotal.textContent = formatVnd(data.subtotal);
+                if (shipping) shipping.textContent = Number(data.shipping) === 0 ? 'Miễn phí' : formatVnd(data.shipping);
+                if (discount) discount.textContent = formatVnd(data.discountAmount);
+                if (total) total.textContent = formatVnd(data.total);
+                if (window.LuxStore) LuxStore.updateCartBadge();
+
+                if (data.isEmpty) {
+                    window.location.reload();
+                }
+            });
+        });
+
+        const promoBtn = document.getElementById('cartApplyPromotionBtn');
+        const promoInput = document.getElementById('cartPromotionCode');
+        const promoMsg = document.getElementById('cartPromotionMessage');
+        promoBtn?.addEventListener('click', async () => {
+            const code = (promoInput?.value || '').trim();
+            if (!code) return;
+            const res = await fetch('/Cart/ApplyCoupon', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code })
+            });
+            const data = await res.json();
+            if (!data.success) {
+                if (promoMsg) { promoMsg.className = 'text-danger d-block mt-2'; promoMsg.textContent = data.message || 'Không áp dụng được mã.'; }
+                return;
+            }
+            if (promoMsg) { promoMsg.className = 'text-success d-block mt-2'; promoMsg.textContent = data.message || 'Áp dụng thành công.'; }
+            const subtotal = document.getElementById('cartSubtotal');
+            const shipping = document.getElementById('cartShipping');
+            const discount = document.getElementById('cartDiscount');
+            const total = document.getElementById('cartTotal');
+            if (subtotal) subtotal.textContent = formatVnd(data.subtotal);
+            if (shipping) shipping.textContent = Number(data.shipping) === 0 ? 'Miễn phí' : formatVnd(data.shipping);
+            if (discount) discount.textContent = formatVnd(data.discountAmount);
+            if (total) total.textContent = formatVnd(data.total);
+        });
+        promoInput?.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                promoBtn?.click();
+            }
+        });
+    })();
+</script>
+}

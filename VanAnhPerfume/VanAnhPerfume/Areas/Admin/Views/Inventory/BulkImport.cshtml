@@ -1,0 +1,31 @@
+@model List<VanAnhPerfume.Models.ViewModels.BulkImportPreviewRowVM>
+@{
+    Layout = "_AdminLayout";
+}
+<h4>Nhập kho hàng loạt</h4>
+<div class="d-flex gap-2 mb-3">
+    <a class="btn btn-outline-dark" asp-action="DownloadTemplate">Tải template CSV</a>
+    <a class="btn btn-light" asp-action="Index">Quay lại</a>
+</div>
+<form asp-action="BulkImportPreview" method="post" enctype="multipart/form-data" class="mb-3">
+    <input type="file" name="csvFile" accept=".csv" class="form-control mb-2" required />
+    <button class="btn btn-primary">Preview</button>
+</form>
+@if (Model.Any())
+{
+    <table class="table table-lux">
+        <thead><tr><th>SKU</th><th>Quantity</th><th>Note</th><th>Kết quả</th></tr></thead>
+        <tbody>
+        @foreach (var row in Model)
+        {
+            <tr>
+                <td>@row.Sku</td><td>@row.Quantity</td><td>@row.Note</td>
+                <td>@if (row.IsValid){<span class="text-success">Hợp lệ</span>}else{<span class="text-danger">@row.Error</span>}</td>
+            </tr>
+        }
+        </tbody>
+    </table>
+    <form asp-action="BulkImportConfirm" method="post">
+        <button class="btn btn-success" @(Model.Any(x => !x.IsValid) ? "disabled" : "")>Xác nhận nhập kho</button>
+    </form>
+}

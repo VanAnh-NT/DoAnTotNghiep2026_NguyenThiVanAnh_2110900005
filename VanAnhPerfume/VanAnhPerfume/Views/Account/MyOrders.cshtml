@@ -1,0 +1,51 @@
+@model IEnumerable<VanAnhPerfume.Models.ViewModels.MyOrderItemVM>
+@{
+    ViewData["Title"] = "Đơn hàng của tôi";
+}
+<section class="section-block pt-4">
+<div class="site-container">
+    @{
+        var isAuthenticated = User.Identity?.IsAuthenticated == true;
+    }
+    <div class="row g-4">
+        @if (isAuthenticated)
+        {
+            <div class="col-12 col-md-4">
+                <partial name="_AccountNav" />
+            </div>
+        }
+        <div class="col-12 @(isAuthenticated ? "col-md-8" : string.Empty)">
+            <h3 class="mb-3">Đơn hàng của tôi</h3>
+            @if (!Model.Any())
+            {
+                <div class="border rounded-0 p-4 text-center">
+                    <p class="mb-2">Chưa có đơn hàng nào trong lịch sử.</p>
+                    <a href="/Product" class="btn btn-primary-lux">Tiếp tục mua sắm</a>
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-lux align-middle">
+                        <thead><tr><th>Mã đơn</th><th>Ngày đặt</th><th>Tổng tiền</th><th>Trạng thái</th><th>Thanh toán</th><th></th></tr></thead>
+                        <tbody>
+                        @foreach (var item in Model)
+                        {
+                            var statusClass = item.Status == "Pending" ? "bg-warning text-dark" : item.Status == "Shipping" ? "bg-info text-white" : item.Status == "Completed" ? "bg-success text-white" : "bg-danger text-white";
+                            <tr>
+                                <td>#@item.OrderId</td>
+                                <td>@item.OrderDate?.ToString("dd/MM/yyyy HH:mm")</td>
+                                <td>@item.TotalAmount.ToString("N0") ₫</td>
+                                <td><span class="badge @statusClass rounded-0">@item.Status</span></td>
+                                <td>@item.PaymentStatus</td>
+                                <td><a asp-action="OrderTracking" asp-route-id="@item.OrderId" class="btn btn-secondary-lux py-2 px-3">Chi tiết</a></td>
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+</section>

@@ -1,0 +1,295 @@
+﻿@using System.Net
+@using System.Text.RegularExpressions
+@model IEnumerable<VanAnhPerfume.Models.ViewModels.ProductHomeVM>
+@{
+    ViewData["Title"] = "Luxury Perfume";
+    // var homeCategories = ViewBag.HomeCategories as List<VanAnhPerfume.Models.Entities.Category> ?? [];
+    // var categoryShowcases = ViewBag.CategoryShowcases as List<VanAnhPerfume.Models.ViewModels.HomeCategoryShowcaseVM> ?? [];
+    var homeBrands = ViewBag.HomeBrands as List<VanAnhPerfume.Models.Entities.Brand> ?? [];
+    var brandShowcases = ViewBag.BrandShowcases as List<VanAnhPerfume.Models.ViewModels.HomeBrandShowcaseVM> ?? [];
+    var posts = ViewBag.LatestNews as List<VanAnhPerfume.Models.Entities.News> ?? [];
+    var banners = ViewBag.Banners as List<VanAnhPerfume.Models.Entities.Banner> ?? [];
+    var midBanners = ViewBag.MidBanners as List<VanAnhPerfume.Models.Entities.Banner> ?? [];
+    const string heroFallback = "/images/hero-placeholder.svg";
+
+    string DecodeHtmlText(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return string.Empty;
+        }
+
+        var text = value;
+
+        for (var i = 0; i < 3; i++)
+        {
+            var decoded = WebUtility.HtmlDecode(text);
+
+            if (decoded == text)
+            {
+                break;
+            }
+
+            text = decoded;
+        }
+
+        return text;
+    }
+
+    string BuildExcerpt(string? excerpt, string? content, int length = 120)
+    {
+        var rawText = !string.IsNullOrWhiteSpace(excerpt)
+            ? excerpt
+            : Regex.Replace(content ?? string.Empty, "<.*?>", " ");
+
+        rawText = DecodeHtmlText(rawText);
+        rawText = Regex.Replace(rawText, "<.*?>", " ");
+        rawText = Regex.Replace(rawText, @"\s+", " ").Trim();
+
+        return rawText.Length > length ? rawText[..length] + "..." : rawText;
+    }
+}
+<section class="home-slider py-3">
+    <div class="container-fluid px-0">
+        <div class="row g-0">
+            <div class="col-12">
+                <div class="swiper hero-swiper w-100">
+                    <div class="swiper-wrapper">
+                        @if (banners.Any())
+                        {
+                            @foreach (var banner in banners)
+                            {
+                                <div class="swiper-slide">
+                                    <a href="@(string.IsNullOrWhiteSpace(banner.LinkUrl) ? "/Product" : banner.LinkUrl)" title="@banner.Title" class="d-block position-relative">
+                                        <img src="@banner.ImageUrl"
+                                             srcset="@(string.IsNullOrWhiteSpace(banner.MobileImageUrl) ? banner.ImageUrl : $"{banner.MobileImageUrl} 768w, {banner.ImageUrl} 1920w")"
+                                             onerror="this.onerror=null;this.src='@heroFallback';"
+                                             alt="@banner.Title"
+                                             class="w-100 hero-banner-img" />
+                                        <div class="position-absolute top-50 start-0 translate-middle-y p-4" style="color:@(banner.TextColor ?? "#fff");max-width:520px;">
+                                            <h2 class="h4 mb-2">@banner.Title</h2>
+                                            <p class="mb-2">@banner.SubTitle</p>
+                                            @if (!string.IsNullOrWhiteSpace(banner.ButtonText)){<span class="btn btn-sm btn-light">@banner.ButtonText</span>}
+                                        </div>
+                                    </a>
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <div class="swiper-slide">
+                                <a href="/Product" title="Banner">
+                                    <img src="https://tprofumo.com/wp-content/uploads/2023/04/banner_brand_image_tprofumo2.jpg"
+                                         onerror="this.onerror=null;this.src='@heroFallback';"
+                                         alt="Banner"
+                                         class="w-100 hero-banner-img" />
+                                </a>
+                            </div>
+                        }
+                    </div>
+                    <div class="swiper-pagination"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@* <section class="section-block pt-4">
+    <div class="site-container">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+            <h2 class="h4 mb-0">DANH MỤC NƯỚC HOA</h2>
+            <a href="/Product" class="btn btn-secondary-lux py-2 px-3">Xem tất cả</a>
+        </div>
+        <div class="home-category-grid">
+            @foreach (var c in homeCategories)
+            {
+                <a href="/Product?category=@(c.Slug ?? c.Name.ToLower().Replace(" ","-"))" class="home-category-item">@c.Name</a>
+            }
+        </div>
+    </div>
+</section> *@
+
+<section class="section-block pt-4">
+    <div class="site-container">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+            <h2 class="h4 mb-0">THƯƠNG HIỆU NƯỚC HOA</h2>
+            <a href="/Product" class="btn btn-secondary-lux py-2 px-3">Xem tất cả</a>
+        </div>
+
+        <div class="home-category-grid">
+            @foreach (var b in homeBrands)
+            {
+                var brandSlug = b.Slug ?? b.Name.ToLower().Replace(" ", "-");
+
+                <a href="/Home/Brand/@Uri.EscapeDataString(brandSlug)" class="home-category-item">
+                    @b.Name
+                </a>
+            }
+        </div>
+    </div>
+</section>
+
+@* @foreach (var block in categoryShowcases)
+{
+    <section class="product-banner section-block pt-0">
+        <div class="site-container">
+            <div class="widget-header">
+                <div class="widget-title">@block.CategoryName</div>
+                <a href="/Product?category=@Uri.EscapeDataString(block.CategorySlug)" class="btn btn-secondary-lux py-2 px-3">Xem tất cả</a>
+            </div>
+            <div class="widget-content">
+                <div class="banner-featured">
+                    <img src="@block.BannerImageUrl" alt="@block.CategoryName" onerror="this.onerror=null;this.src='@heroFallback';" />
+                </div>
+                <div class="list-product">
+                    @foreach (var item in block.Products)
+                    {
+                        <article class="product-item-mini">
+                            <a href="/Product/Detail/@item.ProductId" class="product-thumbnail product-thumb">
+                                <img class="product-thumb-main" src="@item.ImageUrl" alt="@item.ProductName" />
+                                <img class="product-thumb-hover" src="@(item.HoverImageUrl ?? item.ImageUrl)" alt="@item.ProductName" />
+                            </a>
+                            <h3 class="product-title">
+                                <a href="/Product/Detail/@item.ProductId">@item.ProductName</a>
+                            </h3>
+                            <span class="product-price">@item.FormattedPrice</span>
+                        </article>
+                    }
+                </div>
+            </div>
+        </div>
+    </section>
+} *@
+
+@foreach (var block in brandShowcases)
+{
+    <section class="product-banner section-block pt-0">
+        <div class="site-container">
+            <div class="widget-header">
+                <div class="widget-title">Nước hoa @block.BrandName</div>
+
+                <a href="/Home/Brand/@Uri.EscapeDataString(block.BrandSlug)" class="btn btn-secondary-lux py-2 px-3">
+                    Xem tất cả
+                </a>
+            </div>
+
+            <div class="widget-content">
+                <div class="banner-featured">
+                    <img src="@block.BannerImageUrl"
+                         alt="@block.BrandName"
+                         onerror="this.onerror=null;this.src='@heroFallback';" />
+                </div>
+
+                <div class="list-product">
+                    @foreach (var item in block.Products)
+                    {
+                        <article class="product-item-mini">
+                            <a href="/Product/Detail/@item.ProductId" class="product-thumbnail product-thumb">
+                                <img class="product-thumb-main" src="@item.ImageUrl" alt="@item.ProductName" />
+                                <img class="product-thumb-hover" src="@(item.HoverImageUrl ?? item.ImageUrl)" alt="@item.ProductName" />
+                            </a>
+
+                            <h3 class="product-title">
+                                <a href="/Product/Detail/@item.ProductId">@item.ProductName</a>
+                            </h3>
+
+                            <span class="product-price">@item.FormattedPrice</span>
+                        </article>
+                    }
+                </div>
+            </div>
+        </div>
+    </section>
+}
+
+<section class="section-block home-trust-strip" style="background:var(--color-section);border-top:1px solid var(--color-border);border-bottom:1px solid var(--color-border);">
+    <div class="site-container">
+        <div class="row g-4">
+            <div class="col-12 col-md-3">
+                <h3 class="h6 home-trust-strip__title"><i class="bi bi-patch-check me-1"></i> Hàng Chính Hãng</h3>
+                <p class="text-muted home-trust-strip__text">Nguồn gốc minh bạch, bảo hành chuẩn hãng.</p>
+            </div>
+            <div class="col-12 col-md-3">
+                <h3 class="h6 home-trust-strip__title"><i class="bi bi-truck me-1"></i> Freeship 500K+</h3>
+                <p class="text-muted home-trust-strip__text">Giao nhanh toàn quốc, đóng gói premium.</p>
+            </div>
+            <div class="col-12 col-md-3">
+                <h3 class="h6 home-trust-strip__title"><i class="bi bi-arrow-repeat me-1"></i> Đổi Trả 7 Ngày</h3>
+                <p class="text-muted home-trust-strip__text">Đảm bảo trải nghiệm mua sắm an tâm.</p>
+            </div>
+            <div class="col-12 col-md-3">
+                <h3 class="h6 home-trust-strip__title"><i class="bi bi-chat-dots me-1"></i> Tư Vấn 24/7</h3>
+                <p class="text-muted home-trust-strip__text">Đội ngũ chuyên gia mùi hương đồng hành.</p>
+            </div>
+        </div>
+    </div>
+</section>
+@if (midBanners.Any())
+{
+<section class="section-block pt-0">
+    <div class="site-container">
+        <div class="row g-4">
+            @foreach (var b in midBanners)
+            {
+                <div class="col-12 col-md-6">
+                    <a href="@(string.IsNullOrWhiteSpace(b.LinkUrl)?"/Product":b.LinkUrl)" class="d-block position-relative">
+                        <img src="@b.ImageUrl"
+                             srcset="@(string.IsNullOrWhiteSpace(b.MobileImageUrl) ? b.ImageUrl : $"{b.MobileImageUrl} 768w, {b.ImageUrl} 1920w")"
+                             style="width:100%;aspect-ratio:16/7;object-fit:cover;" />
+                        <div class="position-absolute bottom-0 start-0 p-3" style="color:@(b.TextColor ?? "#fff")">@b.Title</div>
+                    </a>
+                </div>
+            }
+        </div>
+    </div>
+</section>
+}
+
+<section class="section-block">
+    <div class="site-container">
+        <h2 class="text-center mb-4">TẠP CHÍ NƯỚC HOA</h2>
+
+        <div class="row g-4">
+            @foreach (var post in posts)
+            {
+                var title = DecodeHtmlText(post.Title);
+                var excerpt = BuildExcerpt(post.Excerpt, post.Content, 120);
+                var imageUrl = post.ThumbnailUrl ?? post.Image ?? "/images/default-perfume.jpg";
+
+                <div class="col-12 col-md-4">
+                    <a href="/Home/BlogDetail/@post.NewsId"
+                           class="product-card home-blog-card d-block h-100 text-decoration-none text-dark"
+                           title="@title">
+                        <img src="@imageUrl"
+                             alt="@title"
+                             style="width:100%;aspect-ratio:16/9;object-fit:cover;" />
+
+                        <div class="p-3">
+                            <div class="label-uppercase text-muted mb-1">
+                                Editorial
+                            </div>
+
+                            <h3 class="h6 mb-2 home-blog-card__title">
+                                @title
+                            </h3>
+
+                            <p class="text-muted mb-0">
+                                @excerpt
+                            </p>
+                        </div>
+                    </a>
+                </div>
+            }
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <script>
+        new Swiper('.hero-swiper', {
+            loop: true,
+            autoplay: { delay: 5000 },
+            pagination: { el: '.hero-swiper .swiper-pagination', clickable: true }
+        });
+    </script>
+}

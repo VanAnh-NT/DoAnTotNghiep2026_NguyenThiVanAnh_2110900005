@@ -1,0 +1,49 @@
+TÀI KHOẢN DEMO WEBSITE VAN ANH PERFUME
+======================================
+Hình thức đăng nhập của tài khoản ADMIN và tài khoản Khách hàng đều bao gồm số điện thoại và mật khẩu:
+
+1. Tài khoản Admin
+
+Số điện thoại:
+0900000001
+
+Mật khẩu:
+Admin@123
+
+--------------------------------------------------
+
+2. Tài khoản Khách hàng
+
+Số điện thoại:
+0344224228
+
+Mật khẩu:
+123456
+
+--------------------------------------------------
+
+3. Vị trí file này trong dự án
+
+Đường dẫn tương đối trong repository:
+
+Documents/TaiKhoanDemo.txt
+
+--------------------------------------------------
+
+4. Cấu hình VNPAY 
+  "Vnpay": {
+    "TmnCode": "MNB1L7EL",
+    "HashSecret": "F2H77N21VCXW4UV3V5W36WTBU6DYFM7V",
+    "PaymentUrl": "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html",
+    "ReturnUrl": "https://localhost:3000/Checkout/VnpayReturn",
+    "IpnUrl": "https://localhost:3000/Checkout/VnpayIpn"
+  },
+(Vì phần cấu hình này đang là môi trường test nên có thể đưa lên)
+--------------------------------------------------
+
+5. Ghi chú
+
+- Đây là tài khoản dùng để kiểm thử đồ án.
+- Không sử dụng mật khẩu thật.
+- Nếu đăng nhập không thành công, kiểm tra lại bảng Users trong database.
+- Nếu tài khoản Admin không vào được trang quản trị, kiểm tra lại quyền trong bảng Roles hoặc trường RoleId của người dùng.

@@ -67,6 +67,10 @@ Dự án được xây dựng nhằm hỗ trợ khách hàng xem sản phẩm, t
 ---
 
 ## 4. Cấu trúc thư mục
+
+Cấu trúc thư mục chính của dự án:
+
+```text
 ProjectCode/
 ├── VanAnhPrefume/
 │   └── VanAnhPrefume/
@@ -98,3 +102,14 @@ ProjectCode/
 │
 ├── README.md
 └── .gitignore
+```
+
+Trong đó:
+
+| Thư mục/File                   | Ý nghĩa                                                            |
+| ------------------------------ | ------------------------------------------------------------------ |
+| `VanAnhPrefume/VanAnhPrefume/` | Chứa mã nguồn chính của website                                    |
+| `Database/`                    | Chứa file SQL tạo cơ sở dữ liệu và dữ liệu mẫu                     |
+| `Documents/`                   | Chứa tài liệu hướng dẫn cài đặt, tài khoản demo và ghi chú bảo mật |
+| `README.md`                    | File giới thiệu tổng quan dự án                                    |
+| `.gitignore`                   | File cấu hình các thư mục/file không đưa lên GitHub                |
